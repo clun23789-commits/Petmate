@@ -1,0 +1,88 @@
+<view class="share-page">
+  <top-nav title="分享作品" subtitle="来自好友的 Petmate 宠物数字形象作品" show-back="{{true}}" bindback="handleBack"></top-nav>
+
+  <view wx:if="{{status === 'loading'}}" class="loading-wrap">
+    <view class="loading-card">
+      <view class="loading-dot"></view>
+      <text class="loading-title">正在加载分享内容...</text>
+      <text class="loading-desc">正在从云端读取这份宠物作品</text>
+    </view>
+  </view>
+
+  <view wx:elif="{{status === 'success'}}" class="share-content">
+    <view class="hero-card">
+      <image wx:if="{{share.imageUrl}}" class="hero-image" src="{{share.imageUrl}}" mode="aspectFill"></image>
+      <view wx:else class="image-fallback">
+        <text class="image-fallback-title">作品图片暂不可用</text>
+        <text class="image-fallback-desc">可以继续查看分享说明</text>
+      </view>
+
+      <view class="preview-badge">
+        <view class="preview-badge-icon">好</view>
+        <text class="preview-badge-text">{{share.statusText}}</text>
+      </view>
+
+      <view class="owner-card">
+        <view class="share-meta">
+          <text class="share-title">{{share.title}}</text>
+          <text wx:if="{{share.petName}}" class="pet-name">宠物名：{{share.petName}}</text>
+          <text class="share-description">{{share.description}}</text>
+          <view wx:if="{{share.tags.length}}" class="tag-row">
+            <text wx:for="{{share.tags}}" wx:key="*this" class="share-tag">{{item}}</text>
+          </view>
+          <view wx:if="{{share.featureItems.length}}" class="feature-row">
+            <view wx:for="{{share.featureItems}}" wx:key="title" class="feature-item">
+              <view wx:if="{{index < share.featureItems.length - 1}}" class="feature-divider"></view>
+              <text class="feature-icon">{{item.icon}}</text>
+              <text class="feature-title">{{item.title}}</text>
+              <text class="feature-desc">{{item.desc}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="official-banner">
+      <view class="banner-icon">P</view>
+      <view class="banner-copy">
+        <text class="banner-title">作品由 {{share.generatedBy}} 生成</text>
+        <text class="banner-desc">仅用于作品展示与分享</text>
+      </view>
+    </view>
+
+    <view class="action-card start-action">
+      <view class="action-icon action-icon-warm">启</view>
+      <view class="action-copy">
+        <text class="action-title">{{primaryActionTitle}}</text>
+        <text class="action-desc">{{primaryActionDesc}}</text>
+      </view>
+      <button class="primary-pill" bindtap="handleEnterConversion" hover-class="none">{{primaryActionText}}</button>
+    </view>
+
+    <view class="action-card cases-action">
+      <view class="action-icon">返</view>
+      <view class="action-copy">
+        <text class="action-title">返回作品首页</text>
+        <text class="action-desc">回到 Petmate 查看作品与继续体验。</text>
+      </view>
+      <button class="light-pill" bindtap="handleGoWorks" hover-class="none">{{secondaryActionText}}</button>
+    </view>
+
+    <view class="safe-footer">
+      <text class="safe-footer-text">分享内容仅用于宠物作品展示，不包含用户隐私信息。</text>
+    </view>
+  </view>
+
+  <view wx:else class="invalid-wrap">
+    <view class="error-card">
+      <view class="error-mark">!</view>
+      <text wx:if="{{errorText}}" class="error-title">{{errorText}}</text>
+      <text wx:else class="error-title">这个分享可能已经失效</text>
+      <text class="error-desc">{{errorDesc}}</text>
+      <view class="error-actions">
+        <button class="primary-pill error-button" bindtap="handleGoCases" hover-class="none">查看案例</button>
+        <button class="light-pill error-button" bindtap="handleGoWorks" hover-class="none">返回作品页</button>
+      </view>
+    </view>
+  </view>
+</view>

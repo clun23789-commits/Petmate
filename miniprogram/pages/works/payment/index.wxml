@@ -1,0 +1,125 @@
+<app-page-layout title="{{navTitle}}" show-back="{{true}}" auto-back="{{false}}" bindback="handleBackPage">
+  <view wx:if="{{workAvailable}}" class="payment-page {{isUnlockedState ? 'payment-page-unlocked' : ''}}">
+    <block wx:if="{{isUnlockedState}}">
+      <view class="unlocked-hero">
+        <view class="success-check">✓</view>
+        <text class="unlocked-title">{{unlockedTitle}}</text>
+        <text class="unlocked-subtitle">{{unlockedSubtitle}}</text>
+        <text class="unlocked-desc">{{unlockedDescription}}</text>
+      </view>
+
+      <view class="work-card owned-work-card">
+        <image class="work-image" src="{{workCover}}" mode="aspectFill"></image>
+        <view class="work-copy">
+          <text class="work-label">当前宠物作品</text>
+          <text class="work-title">{{workDisplayName}}</text>
+          <text class="work-meta">已购 AR · {{workStatusText}}</text>
+        </view>
+      </view>
+
+      <view class="rights-card">
+        <view wx:for="{{unlockedBenefits}}" wx:key="text" class="benefit-row">
+          <view class="benefit-check">✓</view>
+          <text class="benefit-text">{{item.text}}</text>
+        </view>
+      </view>
+
+      <primary-button text="进入 AR 展示" subtext="使用当前作品已购权益" bindpress="handlePrimary"></primary-button>
+      <secondary-button text="{{secondaryText}}" subtext="{{secondarySubtext}}" bindpress="handleSecondary"></secondary-button>
+
+      <view class="rights-link" bindtap="handleRightsExplanation">
+        <text>查看权益说明</text>
+        <text class="rights-link-arrow">›</text>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="trust-banner">
+        <view class="trust-icon">✓</view>
+        <text class="trust-text">同一宠物作品解锁后可反复进入 AR 展示，后续优化仍继承已购权益。</text>
+      </view>
+
+      <view class="work-card">
+        <image class="work-image" src="{{workCover}}" mode="aspectFill"></image>
+        <view class="work-copy">
+          <view class="work-title-row">
+            <text class="work-label">当前宠物作品</text>
+            <status-tag text="{{workTagText}}" tone="{{workTagTone}}"></status-tag>
+          </view>
+          <text class="work-title">{{workDisplayName}}</text>
+          <text class="work-meta">{{workStatusText}} · {{createdAtText}}</text>
+          <text class="detail-link" bindtap="handleViewWorkDetail">查看作品详情 ›</text>
+        </view>
+      </view>
+
+      <view class="purchase-card">
+        <view class="purchase-head">
+          <view class="purchase-copy">
+            <text class="purchase-title">当前作品 AR 展示权益</text>
+            <text class="purchase-desc">仅对 {{workDisplayName}} 这份作品生效，不与其他作品互通。</text>
+          </view>
+          <text class="purchase-price">{{amount}}</text>
+        </view>
+        <view class="rights-grid">
+          <view wx:for="{{rightsItems}}" wx:key="title" wx:for-item="item" class="rights-item">
+            <view class="rights-icon">{{item.icon}}</view>
+            <text class="rights-name">{{item.title}}</text>
+            <text class="rights-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{statusNotice}}" class="status-notice {{statusNotice.className}}">
+        <view class="status-notice-icon">{{statusNotice.icon}}</view>
+        <view class="status-notice-copy">
+          <text class="status-notice-title">{{statusNotice.title}}</text>
+          <text class="status-notice-desc">{{statusNotice.description}}</text>
+        </view>
+      </view>
+
+      <view class="action-card">
+        <view class="action-top">
+          <view class="action-amount-copy">
+            <text class="action-amount-label">支付金额</text>
+            <text class="action-amount-caption">仅为当前宠物作品解锁 AR 展示权益</text>
+          </view>
+          <text class="action-amount">{{amount}}</text>
+        </view>
+
+        <view wx:if="{{showAgreementRow}}" class="agreement-row">
+          <view class="agreement-check {{hasAgreedPaymentProtocol ? 'is-checked' : ''}}" bindtap="handleToggleAgreement">
+            <text class="agreement-check-icon">{{hasAgreedPaymentProtocol ? '✓' : ''}}</text>
+          </view>
+          <text class="agreement-text" bindtap="handleToggleAgreement">我已阅读并同意</text>
+          <text class="agreement-link" bindtap="handleProtocolTap">《付款协议》</text>
+        </view>
+
+        <button
+          class="pay-button {{pageStatus === 'paying' ? 'is-disabled' : ''}} {{showAgreementRow && !hasAgreedPaymentProtocol ? 'is-waiting-agreement' : ''}}"
+          disabled="{{pageStatus === 'paying'}}"
+          bindtap="handlePrimary"
+        >
+          {{primaryText}}
+        </button>
+
+        <view class="action-links">
+          <text class="action-link" bindtap="handleSecondary">{{secondaryText}}</text>
+          <text wx:if="{{showContactLink}}" class="action-link action-link-strong" bindtap="handleContact">联系客服</text>
+        </view>
+      </view>
+
+      <view wx:if="{{showSecurityRow}}" class="security-row">
+        <text class="security-icon">锁</text>
+        <text class="security-text">支付安全由微信提供保障。支付完成但权益确认中时，请不要重复支付。</text>
+      </view>
+    </block>
+  </view>
+
+  <error-state
+    wx:else
+    title="无法继续支付"
+    description="当前作品数据不可用，可能已被删除或尚未加载完成。"
+    primary-text="返回作品页"
+    bindprimary="handleGoWorks"
+  ></error-state>
+</app-page-layout>

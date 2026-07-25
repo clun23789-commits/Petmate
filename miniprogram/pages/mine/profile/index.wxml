@@ -1,0 +1,137 @@
+<app-page-layout
+  title="个人信息"
+  show-back="{{true}}"
+  fallback-path="/pages/mine/index/index"
+  fallback-mode="switchTab"
+  content-class="page-shell-flush"
+  nav-size="compact"
+>
+<view class="profile-page">
+  <view class="profile-content">
+    <view class="hero-card">
+      <view class="hero-avatar-wrap">
+        <image class="hero-avatar" src="{{displayAvatar}}" mode="aspectFill"></image>
+      </view>
+
+      <view class="hero-info">
+        <text class="hero-name">{{nickname}}</text>
+        <view class="hero-login">
+          <view class="wechat-mark">
+            <view class="wechat-bubble wechat-bubble-main"></view>
+            <view class="wechat-bubble wechat-bubble-sub"></view>
+          </view>
+          <text>{{loginStatusText}}</text>
+        </view>
+      </view>
+
+      <view class="hero-pet-wrap" aria-hidden="true">
+        <view class="shield-mark">✓</view>
+        <image class="hero-pet" src="{{heroPetImage}}" mode="aspectFit"></image>
+        <view class="leaf leaf-hero-a"></view>
+        <view class="leaf leaf-hero-b"></view>
+      </view>
+    </view>
+
+    <view class="info-card">
+      <view class="info-row" bindtap="handleAvatarInfo">
+        <view class="row-left">
+          <view class="row-icon user-icon"></view>
+          <text class="row-title">头像</text>
+        </view>
+        <view class="row-right">
+          <text class="row-value">{{avatarSourceText}}</text>
+          <text class="row-arrow">›</text>
+        </view>
+      </view>
+      <view class="row-divider"></view>
+
+      <view class="info-row" bindtap="handleOpenNickname">
+        <view class="row-left">
+          <view class="row-icon edit-line-icon"></view>
+          <text class="row-title">昵称</text>
+        </view>
+        <view class="row-right">
+          <text class="row-value row-value-strong">{{nickname}}</text>
+          <text class="row-arrow">›</text>
+        </view>
+      </view>
+      <view class="row-divider"></view>
+
+      <view class="info-row">
+        <view class="row-left">
+          <view class="row-icon shield-icon"></view>
+          <text class="row-title">登录状态</text>
+        </view>
+        <view class="row-right">
+          <text class="row-value row-value-strong">{{loginStatusValue}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="action-card">
+      <view class="action-row" bindtap="handleOpenNickname">
+        <view class="row-left">
+          <view class="action-icon nickname-action-icon"></view>
+          <text class="row-title">修改昵称</text>
+        </view>
+        <text class="row-arrow">›</text>
+      </view>
+      <view class="row-divider action-divider"></view>
+
+      <view class="action-row" bindtap="handleOpenLogout">
+        <view class="row-left row-left-column">
+          <view class="action-icon logout-action-icon"></view>
+          <view class="action-copy">
+            <text class="row-title">退出登录</text>
+            <text class="row-desc">退出后仍可重新登录查看作品</text>
+          </view>
+        </view>
+        <text class="row-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="notice-card">
+      <view class="notice-icon light-icon"></view>
+      <view class="notice-copy">
+        <text class="notice-title">说明</text>
+        <text class="notice-desc">个人信息仅用于账号展示与基础管理，不影响宠物作品与 AR 权益记录。</text>
+      </view>
+      <view class="notice-leaf notice-leaf-a"></view>
+      <view class="notice-leaf notice-leaf-b"></view>
+      <view class="notice-leaf notice-leaf-c"></view>
+    </view>
+
+    <view class="bottom-actions">
+      <button class="primary-return" bindtap="handleBackToMine" hover-class="button-hover">
+        <text class="button-symbol">‹</text>
+        <text>返回我的页</text>
+      </button>
+      <button class="outline-benefit" bindtap="handleViewBenefits" hover-class="button-hover">
+        <view class="benefit-icon"></view>
+        <text>查看权益说明</text>
+      </button>
+    </view>
+
+    <view class="help-entry" bindtap="handleGoHelp">
+      <text class="help-question">?</text>
+      <text>如需帮助，可前往 </text>
+      <text class="help-link">帮助中心</text>
+      <text class="help-arrow">›</text>
+    </view>
+
+    <view class="safe-bottom"></view>
+  </view>
+
+  <nickname-editor
+    visible="{{showNicknameDialog}}"
+    value="{{nickname}}"
+    bindsave="handleSaveNickname"
+    bindcancel="handleCloseNickname"
+  ></nickname-editor>
+  <logout-confirm
+    visible="{{showLogoutDialog}}"
+    bindconfirm="handleLogout"
+    bindcancel="handleCloseLogout"
+  ></logout-confirm>
+</view>
+</app-page-layout>

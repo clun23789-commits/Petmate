@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index"
+  }
+}

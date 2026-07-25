@@ -1,0 +1,41 @@
+{
+  "appid": "wx0d951d7b426c4d85",
+  "compileType": "miniprogram",
+  "libVersion": "3.3.5",
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "minified": false,
+    "postcss": true,
+    "minifyWXSS": false,
+    "minifyWXML": false,
+    "compileHotReLoad": true,
+    "useMultiFrameRuntime": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "projectname": "petmate-mini",
+  "description": "Petmate 微信小程序开发版，包含云函数、Mock 与作品生成基础流程",
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}

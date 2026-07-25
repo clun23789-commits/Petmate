@@ -1,0 +1,116 @@
+<app-page-layout title="正在生成结果" show-back="{{true}}" auto-back="{{false}}" bindback="handleBackWorks">
+  <view class="generating-page">
+    <view class="hero-card">
+      <view class="hero-copy">
+        <text class="hero-title">正在生成结果</text>
+        <text class="hero-title">请稍等一下</text>
+        <text class="hero-desc">离开页面后任务也会继续</text>
+      </view>
+
+      <view class="transform-stage">
+        <view class="source-card">
+          <image class="source-image" src="/assets/mock/upload-front.png" mode="aspectFill"></image>
+        </view>
+        <text class="stage-arrow">›</text>
+        <view class="source-card mesh-card">
+          <image class="source-image" src="/assets/mock/targeted-reference.png" mode="aspectFill"></image>
+          <view class="mesh-overlay"></view>
+        </view>
+        <text class="stage-arrow">›</text>
+        <view class="final-pet-stage">
+          <view class="pet-platform"></view>
+          <image class="final-pet-image" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+        </view>
+      </view>
+
+      <view class="hero-glow"></view>
+      <text class="sparkle sparkle-a">✦</text>
+      <text class="sparkle sparkle-b">✦</text>
+      <text class="sparkle sparkle-c">✦</text>
+      <view class="leaf leaf-a"></view>
+      <view class="leaf leaf-b"></view>
+      <view class="leaf leaf-c"></view>
+    </view>
+
+    <view class="generation-status-card generation-status-card-{{generationHeroMeta.tone}}">
+      <view class="generation-status-head">
+        <view class="generation-status-icon">{{generationHeroMeta.icon}}</view>
+        <view class="generation-status-copy">
+          <text class="generation-status-title">{{generationHeroMeta.title}}</text>
+          <text class="generation-status-desc">{{generationHeroMeta.desc}}</text>
+        </view>
+      </view>
+
+      <view class="generation-progress-meter">
+        <view class="generation-progress-bar" style="width: {{progressPercent}}%;"></view>
+      </view>
+
+      <text class="generation-status-hint">{{generationHeroMeta.actionHint}}</text>
+    </view>
+
+    <view class="progress-card">
+      <text class="progress-heading">生成进度</text>
+      <view class="progress-track">
+        <block wx:for="{{phaseSteps}}" wx:key="key" wx:for-item="item" wx:for-index="index">
+          <view class="progress-step {{item.active ? 'is-active' : ''}} {{item.done ? 'is-done' : ''}}">
+            <view class="step-icon-wrap">
+              <text class="step-icon">{{item.icon}}</text>
+            </view>
+            <text class="step-title">{{item.title}}</text>
+            <text class="step-desc">{{item.description}}</text>
+          </view>
+          <view wx:if="{{index < phaseSteps.length - 1}}" class="step-connector {{item.done ? 'is-done' : ''}}"></view>
+        </block>
+      </view>
+    </view>
+
+    <view class="trust-card trust-card-main">
+      <view class="trust-icon">✓</view>
+      <view class="trust-copy">
+        <text class="trust-title">可以返回作品页查看状态</text>
+        <text class="trust-desc">离开页面后任务仍会继续，完成后会在作品页更新结果。</text>
+      </view>
+      <view class="trust-decor">
+        <image class="trust-pet" src="/assets/mock/pet-corgi-hero.png" mode="aspectFit"></image>
+        <view class="trust-leaf trust-leaf-a"></view>
+        <view class="trust-leaf trust-leaf-b"></view>
+      </view>
+    </view>
+
+    <view class="trust-card">
+      <view class="trust-icon">↻</view>
+      <view class="trust-copy">
+        <text class="trust-title">失败不会扣减优化次数</text>
+        <text class="trust-desc">系统异常、生成失败或结果未成功返回时，次数和权益都会保留。</text>
+      </view>
+    </view>
+
+    <view wx:if="{{isOptimization}}" class="quota-card">
+      <view class="quota-icon">✓</view>
+      <view class="quota-copy">
+        <text class="quota-title">本次优化已预占 1 次优化次数</text>
+        <text class="quota-desc">若失败不会正式扣减，可放心等待结果。</text>
+      </view>
+      <text class="quota-status">优化中</text>
+    </view>
+
+    <view wx:if="{{status === 'failed'}}" class="failure-recovery-card">
+      <view class="failure-recovery-icon">!</view>
+      <view class="failure-recovery-copy">
+        <text class="failure-recovery-title">这次生成没有成功返回结果</text>
+        <text class="failure-recovery-desc">不会扣减优化次数，可以前往异常恢复页查看处理方式。</text>
+      </view>
+      <button class="failure-recovery-button" bindtap="handleGoException">查看恢复方式</button>
+    </view>
+
+    <button class="back-work-button" bindtap="handleBackWorks">
+      <view class="back-home-icon">
+        <view class="icon-roof"></view>
+        <view class="icon-house"></view>
+      </view>
+      <text class="back-work-text">返回作品页查看状态</text>
+    </button>
+
+    <text class="estimate-text">正在整理本次作品结果，请耐心等待</text>
+  </view>
+</app-page-layout>

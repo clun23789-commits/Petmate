@@ -1,0 +1,141 @@
+<view class="video-detail-page">
+  <view class="video-nav" style="{{navWrapStyle}}">
+    <view class="video-nav-main" style="{{navMainStyle}}">
+      <view class="video-nav-side" style="{{navSideStyle}}">
+        <button class="video-nav-back" bindtap="handleBack" hover-class="none">‹</button>
+      </view>
+
+      <view class="video-nav-copy">
+        <text class="video-nav-title">AR 成果预览</text>
+        <text class="video-nav-subtitle">观看宠物数字形象在现实空间的展示效果</text>
+      </view>
+
+      <view class="video-nav-side video-nav-capsule-side" style="{{navSideStyle}}">
+        <view class="wechat-capsule" style="{{capsuleStyle}}">
+          <text class="capsule-dot">•••</text>
+          <view class="capsule-divider"></view>
+          <view class="capsule-ring"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="video-detail-content">
+    <view wx:if="{{loading}}" class="video-state-card">
+      <view class="state-icon state-icon-loading">AR</view>
+      <text class="state-title">正在加载 AR 成果预览...</text>
+      <text class="state-desc">马上就能看到宠物数字形象在现实空间里的展示效果。</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="video-state-card video-state-error">
+      <image class="state-pet" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+      <text class="state-title">{{error}}</text>
+      <text class="state-desc">可以返回案例页看看其他宠物数字形象，不会出现白屏或空数据错误。</text>
+      <view class="state-actions">
+        <button class="state-button state-button-ghost" bindtap="handleReload" hover-class="none">重新加载</button>
+        <button class="state-button state-button-primary" bindtap="handleGoCases" hover-class="none">返回案例页</button>
+      </view>
+    </view>
+
+    <block wx:elif="{{video}}">
+      <view class="player-card">
+        <image class="player-cover" src="{{video.image}}" mode="aspectFill"></image>
+        <view class="player-vignette"></view>
+
+        <button class="float-control float-control-left" bindtap="handleBack" hover-class="none">
+          <text>‹</text>
+        </button>
+        <button class="float-control float-control-right" bindtap="handleFullscreen" hover-class="none">
+          <text>⛶</text>
+        </button>
+
+        <button class="main-play {{isPlaying ? 'is-playing' : ''}}" bindtap="handleTogglePlay" hover-class="none">
+          <text class="main-play-icon">{{isPlaying ? 'Ⅱ' : '▶'}}</text>
+          <text class="main-play-paw">AR</text>
+        </button>
+
+        <view class="mock-controls">
+          <button class="mini-play" bindtap="handleTogglePlay" hover-class="none">
+            <text>{{isPlaying ? 'Ⅱ' : '▶'}}</text>
+          </button>
+          <text class="control-time">{{currentTimeText}}</text>
+          <view class="progress-track">
+            <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+            <view class="progress-thumb" style="left: {{progressPercent}}%;"></view>
+          </view>
+          <text class="control-time control-duration">{{video.duration}}</text>
+          <button class="mini-fullscreen" bindtap="handleFullscreen" hover-class="none">⛶</button>
+        </view>
+      </view>
+
+      <view class="info-card">
+        <view class="info-copy">
+          <text class="video-title">{{video.title}}</text>
+
+          <view class="video-meta-row">
+            <text class="meta-official-label">官方示例预览</text>
+            <text class="meta-date">{{video.publishDate}}</text>
+
+            <button class="meta-action share-action" open-type="share" bindtap="handleShareTap" hover-class="none">
+              <text class="meta-action-icon">↗</text>
+              <text>分享</text>
+            </button>
+          </view>
+
+          <text class="video-summary">{{video.summary}}</text>
+          <text class="video-desc">{{video.description}}</text>
+
+          <view class="tag-row">
+            <text wx:for="{{video.tags}}" wx:key="*this" wx:for-item="tag" class="tag-chip">{{tag}}</text>
+          </view>
+        </view>
+
+        <view class="model-preview-card" bindtap="handlePreviewModel">
+          <image class="model-preview-image" src="{{video.previewImage}}" mode="aspectFill"></image>
+          <view class="model-preview-button">
+            <text>数字形象预览</text>
+            <text class="model-preview-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="feature-card">
+        <view class="section-title-row">
+          <text class="section-icon sparkle-icon">✦</text>
+          <text class="section-title">本视频展示内容</text>
+        </view>
+
+        <view class="feature-list">
+          <view wx:for="{{featureItems}}" wx:key="title" class="feature-item">
+            <view class="feature-icon-wrap">
+              <text class="feature-icon">{{item.icon}}</text>
+            </view>
+            <text class="feature-title">{{item.title}}</text>
+            <text class="feature-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="safe-bottom-space"></view>
+    </block>
+  </view>
+
+  <view wx:if="{{video && !error}}" class="bottom-dock">
+    <view class="dock-actions">
+      <button class="dock-button dock-secondary" bindtap="handleCase" hover-class="none">
+        <text class="dock-icon">▧</text>
+        <text>查看案例详情</text>
+      </button>
+      <button class="dock-button dock-primary" bindtap="handleStart" hover-class="none">
+        <text class="dock-icon">宠</text>
+        <text>生成我的宠物</text>
+      </button>
+    </view>
+
+    <view class="ad-tip" bindtap="handleAdUnlockTip">
+      <text class="ad-tip-icon">♧</text>
+      <text class="ad-tip-text">真实宠物上传需先进入创作流程，确认规则后再解锁试用</text>
+      <text class="ad-tip-arrow">›</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,50 @@
+@import "../../styles/layout.wxss";
+@import "../../styles/page.wxss";
+
+.action-bar {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-sm) 0 0;
+}
+
+.action-bar.is-fixed {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-index-bottom-bar);
+  padding: var(--space-sm) var(--space-page-x) var(--space-md);
+  border-top: 1rpx solid var(--color-border-light);
+  background: var(--color-bg-card-strong);
+  box-shadow: var(--shadow-sticky-bar);
+}
+
+.action-bar.is-safe {
+  padding-bottom: calc(var(--space-md) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
+}
+
+.action-bar-hint {
+  display: block;
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.action-bar-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.action-bar-horizontal .action-bar-buttons {
+  flex-direction: row;
+}
+
+.action-bar-horizontal secondary-button,
+.action-bar-horizontal primary-button {
+  flex: 1;
+  min-width: 0;
+}

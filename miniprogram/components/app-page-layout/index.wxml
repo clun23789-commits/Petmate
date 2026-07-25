@@ -1,0 +1,15 @@
+<view class="app-layout {{layoutClass}}">
+  <top-nav
+    title="{{title}}"
+    subtitle="{{subtitle}}"
+    show-back="{{showBack}}"
+    show-capsule="{{showCapsule}}"
+    tone="{{navTone}}"
+    size="{{navSize}}"
+    align="{{navAlign}}"
+    bindback="handleBack"
+  ></top-nav>
+  <view class="page-shell {{safeArea ? 'page-shell-safe' : ''}} {{contentClass}}">
+    <slot></slot>
+  </view>
+</view>

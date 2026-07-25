@@ -1,0 +1,167 @@
+<app-page-layout title="定向补图" subtitle="根据你的反馈，我们需要更清晰的照片来优化结果" show-back="{{true}}">
+  <view wx:if="{{workAvailable}}" class="targeted-page">
+    <view class="targeted-notice-card">
+      <view class="notice-icon">i</view>
+      <view class="notice-copy">
+        <text class="notice-line"><text class="notice-emphasis">仅补充缺失或不清晰</text>的推荐视角素材，不需要全部重新上传</text>
+        <text class="notice-line">补充的照片将<text class="notice-emphasis">仅用于本次优化</text>，不会用于其他用途</text>
+      </view>
+    </view>
+
+    <view class="target-card">
+      <view class="card-title-row">
+        <view class="card-title-icon target-icon">◎</view>
+        <text class="card-title">本次优化目标</text>
+      </view>
+
+      <view class="target-content-row">
+        <view class="target-copy-box">
+          <view class="target-problem-line">
+            <text class="target-label">你反馈的问题：</text>
+            <text class="target-problem">{{problemText}}</text>
+          </view>
+          <text class="target-suggest">建议补充：{{suggestText}}</text>
+        </view>
+
+        <image class="target-pet-image" src="{{targetImage}}" mode="aspectFill"></image>
+      </view>
+    </view>
+
+    <view class="existing-assets-card">
+      <view class="card-header-row">
+        <view class="card-title-row">
+          <view class="card-title-icon image-icon">图</view>
+          <text class="card-title">当前已有素材（{{existingAssetCount}} 张）</text>
+        </view>
+        <view class="available-badge">
+          <view class="available-dot">✓</view>
+          <text class="available-text">可用于本次优化</text>
+        </view>
+      </view>
+
+      <scroll-view class="existing-scroll" scroll-x="true" enhanced="true" show-scrollbar="false" enable-flex="true">
+        <view class="existing-row">
+          <view wx:for="{{existingAssets}}" wx:key="key" class="existing-item">
+            <image class="existing-image" src="{{item.image}}" mode="aspectFill"></image>
+            <view class="existing-meta-row">
+              <view class="small-check">✓</view>
+              <view class="existing-copy">
+                <text class="existing-title">{{item.label}}</text>
+                <text class="existing-status">{{item.status}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="existing-view-all" bindtap="handleViewAllAssets">
+            <view class="view-all-icon">图</view>
+            <text class="view-all-text">查看全部</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="suggest-assets-card">
+      <view class="card-title-row">
+        <view class="card-title-icon suggest-icon">+</view>
+        <text class="card-title">建议补充素材（可选）</text>
+      </view>
+
+      <scroll-view class="suggest-scroll" scroll-x="true" enhanced="true" show-scrollbar="false" enable-flex="true">
+        <view class="suggest-row">
+          <view
+            wx:for="{{recommendCards}}"
+            wx:key="key"
+            class="suggest-item {{item.recommended ? 'is-recommended' : ''}}"
+            data-view="{{item.viewType}}"
+            bindtap="handleSelectRecommend"
+          >
+            <view wx:if="{{item.recommended}}" class="recommend-tag">推荐</view>
+            <image class="suggest-item-image" src="{{item.image}}" mode="aspectFit"></image>
+            <text class="suggest-item-title">{{item.title}}</text>
+            <text class="suggest-item-desc">{{item.helper}}</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="suggest-tip-row">
+        <view class="suggest-tip-icon">!</view>
+        <text class="suggest-tip-text">{{tipText}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{assets.length}}" class="supplement-preview-card">
+      <view class="card-header-row">
+        <view class="card-title-row">
+          <view class="card-title-icon supplement-icon">补</view>
+          <text class="card-title">本次新增补图（{{assets.length}} 张）</text>
+        </view>
+        <text class="preview-status">{{canContinue ? '已达到本轮优化要求' : '还可继续补充'}}</text>
+      </view>
+
+      <view class="supplement-list">
+        <view wx:for="{{assets}}" wx:key="assetId" class="supplement-item">
+          <image class="supplement-image" src="{{item.localPath}}" mode="aspectFill"></image>
+          <view class="supplement-copy">
+            <text class="supplement-title">{{item.viewLabel}}</text>
+            <text class="supplement-status">{{item.uploadText}}</text>
+          </view>
+          <view class="supplement-remove" data-asset-id="{{item.assetId}}" bindtap="handleRemove">移除</view>
+        </view>
+      </view>
+
+      <text class="supplement-hint">{{qualityHint}}</text>
+    </view>
+
+    <view class="bottom-action-panel">
+      <view class="action-source-button" bindtap="handleCameraUpload">
+        <view class="source-icon">相</view>
+        <view class="source-copy">
+          <text class="source-title">拍照</text>
+          <text class="source-subtitle">实时拍摄</text>
+        </view>
+      </view>
+
+      <view class="action-source-button" bindtap="handleAlbumUpload">
+        <view class="source-icon">图</view>
+        <view class="source-copy">
+          <text class="source-title">相册</text>
+          <text class="source-subtitle">从相册选择</text>
+        </view>
+      </view>
+
+      <button class="confirm-optimize-button {{!canContinue ? 'is-disabled' : ''}}" disabled="{{!canContinue}}" bindtap="handleSubmit">
+        <text class="confirm-title">{{confirmTitle}}</text>
+        <text class="confirm-subtitle">{{confirmSubtitle}}</text>
+      </button>
+    </view>
+
+    <view class="quota-safe-card">
+      <view class="quota-check">✓</view>
+      <text class="quota-text">本次补图不扣减优化次数；优化成功返回可用结果后才正式扣减 1 次</text>
+      <view class="quota-info">i</view>
+    </view>
+
+    <view wx:if="{{showDevOnlyUi}}" class="debug-grid">
+      <view class="debug-card debug-card-wide" bindtap="handleSubmitFailure">
+        <text class="section-title">生成失败调试入口</text>
+        <text class="caption">仅开发模式显示</text>
+      </view>
+      <view class="debug-card" bindtap="handleMockFailed">
+        <text class="section-title">上传失败调试入口</text>
+        <text class="caption">仅开发模式显示</text>
+      </view>
+      <view class="debug-card" bindtap="handlePermissionError">
+        <text class="section-title">权限异常调试入口</text>
+        <text class="caption">仅开发模式显示</text>
+      </view>
+    </view>
+  </view>
+
+  <error-state
+    wx:else
+    title="无法继续定向补图"
+    description="当前作品数据不可用，可能已被删除或尚未加载完成。"
+    primary-text="返回作品页"
+    bindprimary="handleGoWorks"
+  ></error-state>
+</app-page-layout>

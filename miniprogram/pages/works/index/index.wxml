@@ -1,0 +1,182 @@
+<view class="works-home-page">
+  <view class="works-home-header" style="padding-top: {{headerTopPadding}}px;">
+    <view class="works-home-header-row" style="min-height: {{headerNavHeight}}px;">
+      <view class="works-home-brand">
+        <view class="brand-mark-row">
+          <view class="brand-mark">
+            <text class="brand-mark-text">P</text>
+          </view>
+        </view>
+        <text class="brand-title">Petmate</text>
+        <text class="brand-subtitle">AI 宠物数字形象</text>
+      </view>
+
+      <view class="works-home-header-side" style="width: {{headerRightWidth}}px; min-width: {{headerRightWidth}}px;">
+        <view class="notify-button" bindtap="handleOpenBenefits">
+          <text class="notify-icon">?</text>
+          <view class="notify-dot"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loadFailed}}" class="works-home-stack">
+    <error-state
+      title="作品页暂时没有加载出来"
+      description="你可以重新检查一次本地数据，或先去开始新的创作。"
+      primary-text="重新加载"
+      secondary-text="开始创作"
+      bindprimary="handleRetry"
+      bindsecondary="handleCreate"
+    ></error-state>
+  </view>
+
+  <view wx:else class="works-home-stack">
+    <view wx:if="{{currentHomeWork}}" class="hero-stage">
+      <view class="home-hero-card home-hero-card--{{currentHomeWork.statusTone}}" bindtap="handleOpenCurrent">
+        <view class="hero-scene">
+          <view class="hero-scene-orb hero-scene-orb--left"></view>
+          <view class="hero-scene-orb hero-scene-orb--right"></view>
+          <view class="hero-scene-pane"></view>
+          <view class="hero-scene-floor"></view>
+          <image class="hero-image" src="{{currentHomeWork.previewImage}}" mode="aspectFit"></image>
+        </view>
+
+        <view class="hero-copy">
+          <text class="hero-badge">当前作品</text>
+
+          <view class="hero-title-row">
+            <text class="hero-title">{{currentHomeWork.displayName}}</text>
+            <view class="hero-edit-button">
+              <text class="hero-edit-icon">✎</text>
+            </view>
+          </view>
+
+          <text class="hero-status hero-status--{{currentHomeWork.statusTone}}">{{currentHomeWork.heroStatusText}}</text>
+          <text wx:if="{{currentHomeWork.progressText}}" class="hero-progress">当前进度 {{currentHomeWork.progressText}}</text>
+          <text class="hero-date">创建时间：{{currentHomeWork.createdAtText}}</text>
+        </view>
+
+        <view class="hero-actions-group">
+          <view class="hero-action-pill" catchtap="handlePreviewHint">
+            <text class="hero-action-icon">⟳</text>
+            <text>旋转</text>
+          </view>
+
+          <view class="hero-action-pill" catchtap="handlePreviewHint">
+            <text class="hero-action-icon">⊕</text>
+            <text>缩放</text>
+          </view>
+        </view>
+
+        <view class="hero-detail-button" catchtap="handleOpenCurrent">
+          <text>查看详情</text>
+          <text class="hero-detail-arrow">›</text>
+        </view>
+      </view>
+
+      <view class="hero-dots">
+        <view class="hero-dot hero-dot--active"></view>
+        <view class="hero-dot"></view>
+        <view class="hero-dot"></view>
+        <view class="hero-dot"></view>
+        <view class="hero-dot"></view>
+      </view>
+    </view>
+
+    <view wx:else class="home-empty-card">
+      <view class="empty-scene-orb empty-scene-orb--left"></view>
+      <view class="empty-scene-orb empty-scene-orb--right"></view>
+      <image class="empty-image" src="/assets/mock/pet-corgi-hero.png" mode="aspectFit"></image>
+
+      <view class="empty-copy">
+        <text class="empty-badge">准备开始</text>
+        <text class="empty-title">你的宠物作品会显示在这里</text>
+        <text class="empty-description">先上传宠物照片，生成第一份专属数字形象，后续可继续优化、查看详情和保留作品记录。</text>
+        <view class="empty-action" bindtap="handleCreate">开始创作</view>
+      </view>
+    </view>
+
+    <view class="create-banner">
+      <view class="create-banner-icon">
+        <text class="create-banner-icon-text">创</text>
+      </view>
+
+      <view class="create-banner-copy">
+        <text class="create-banner-title">还没有生成你的宠物？</text>
+        <text class="create-banner-description">上传宠物照片，生成专属 3D 数字形象</text>
+      </view>
+
+      <view class="create-banner-button" bindtap="handleCreate">
+        <text class="create-banner-button-icon">＋</text>
+        <text>开始创作</text>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-head-title">我的作品</text>
+      <view class="section-head-link" bindtap="handleOpenGeneratedList">
+        <text>全部作品</text>
+        <text class="section-head-arrow">›</text>
+      </view>
+    </view>
+
+    <scroll-view wx:if="{{homeWorks.length}}" class="home-work-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}">
+      <view class="home-work-row">
+        <view
+          wx:for="{{homeWorks}}"
+          wx:key="workId"
+          class="home-work-card {{item.selected ? 'home-work-card--selected' : ''}}"
+          data-work-id="{{item.workId}}"
+          bindtap="handleOpenWorkCard"
+        >
+          <view class="work-cover-wrap">
+            <image class="work-cover" src="{{item.previewImage}}" mode="aspectFill"></image>
+            <view wx:if="{{item.selected}}" class="work-selected-badge">✓</view>
+            <view wx:if="{{item.statusTone === 'danger'}}" class="work-failed-badge">!</view>
+          </view>
+
+          <text class="work-name">{{item.displayName}}</text>
+          <text class="work-status work-status--{{item.statusTone}}">{{item.statusText}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view wx:else class="work-empty-state">
+      <view class="work-empty-icon">◌</view>
+      <view class="work-empty-copy">
+        <text class="work-empty-title">还没有已生成作品</text>
+        <text class="work-empty-description">完成第一次创作后，作品会按状态保留在这里，随时可以继续查看与管理。</text>
+      </view>
+    </view>
+
+    <view class="quick-panel">
+      <text class="quick-panel-title">快捷入口</text>
+
+      <view class="quick-grid">
+        <view
+          wx:for="{{homeQuickEntries}}"
+          wx:key="key"
+          class="quick-entry"
+          data-mode="{{item.mode}}"
+          data-route="{{item.route}}"
+          bindtap="handleQuickEntry"
+        >
+          <view class="quick-entry-icon quick-entry-icon--{{item.accent}}">
+            <text class="quick-entry-icon-text">{{item.icon}}</text>
+          </view>
+          <text class="quick-entry-title">{{item.title}}</text>
+          <text class="quick-entry-subtitle">{{item.subtitle}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="home-tip-bar" bindtap="handleOpenHelp">
+      <view class="home-tip-copy">
+        <text class="home-tip-icon">i</text>
+        <text class="home-tip-text">仅支持猫狗、单宠。了解照片上传要求</text>
+      </view>
+      <text class="home-tip-arrow">›</text>
+    </view>
+  </view>
+</view>

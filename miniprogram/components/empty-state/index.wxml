@@ -1,0 +1,26 @@
+<view class="card empty-shell empty-tone-{{tone}} {{compact ? 'is-compact' : ''}}">
+  <view class="empty-visual">
+    <image wx:if="{{image}}" class="empty-image" src="{{image}}" mode="aspectFill"></image>
+    <view wx:else class="empty-placeholder">{{iconText}}</view>
+  </view>
+  <view class="empty-copy">
+    <text class="section-title">{{title}}</text>
+    <text wx:if="{{description}}" class="caption">{{description}}</text>
+  </view>
+  <view wx:if="{{actionText || secondaryText}}" class="empty-actions">
+    <primary-button
+      wx:if="{{actionText}}"
+      text="{{actionText}}"
+      subtext="{{actionSubtext}}"
+      size="{{compact ? 'medium' : 'large'}}"
+      bindpress="handleAction"
+    ></primary-button>
+    <secondary-button
+      wx:if="{{secondaryText}}"
+      text="{{secondaryText}}"
+      subtext="{{secondarySubtext}}"
+      size="{{compact ? 'medium' : 'large'}}"
+      bindpress="handleSecondary"
+    ></secondary-button>
+  </view>
+</view>

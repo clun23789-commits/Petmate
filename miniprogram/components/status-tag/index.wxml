@@ -1,0 +1,4 @@
+<view class="tag tag-{{tone}} tag-{{size}} tag-{{shape}}">
+  <text wx:if="{{iconText}}" class="tag-icon">{{iconText}}</text>
+  <text class="tag-text">{{text}}</text>
+</view>

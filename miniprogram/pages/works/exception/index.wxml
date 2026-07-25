@@ -1,0 +1,114 @@
+<app-page-layout title="异常恢复" show-back="{{true}}" auto-back="{{false}}" bindback="handleBackPrevious">
+  <view class="stack exception-page">
+    <view class="exception-hero-card">
+      <view class="hero-copy">
+        <text class="hero-heading">遇到问题别担心</text>
+        <text class="hero-desc">{{description}}</text>
+      </view>
+
+      <view class="hero-visual">
+        <view class="hero-shield">✓</view>
+        <image class="hero-pet" src="/assets/mock/exception-hero.png" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="recovery-summary-card summary-card summary-card-{{sceneSummary.tone}}">
+      <text class="summary-label">{{sceneSummary.label}}</text>
+      <text class="summary-title">{{sceneSummary.title}}</text>
+      <text class="summary-desc">{{description}}</text>
+    </view>
+
+    <view class="recovery-rights-card rights-status-card">
+      <view class="recovery-section-head">
+        <text class="recovery-section-title">权益与次数状态</text>
+        <text class="recovery-section-caption">先确认哪些内容已保留，再决定下一步怎么恢复。</text>
+      </view>
+      <view class="recovery-check-list rights-check-row">
+        <view wx:for="{{rightsItems}}" wx:key="key" class="recovery-check-item rights-check-item">
+          <text class="recovery-check-icon">✓</text>
+          <text class="rights-check-text">{{item.text}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="recovery-action-card primary-recovery-card">
+      <view class="primary-action-copy">
+        <text class="primary-action-title">推荐操作</text>
+        <text class="primary-action-desc">{{helperText}}</text>
+      </view>
+      <primary-button
+        text="{{primaryRecoveryAction.text}}"
+        subtext="{{primaryRecoveryAction.subtext}}"
+        bindpress="handlePrimaryRecovery"
+      ></primary-button>
+    </view>
+
+    <view class="card-surface action-section">
+      <view class="section-head">
+        <text class="section-title">其他可选操作</text>
+        <text class="section-caption">如果主操作没有解决，可以继续检查状态或提交反馈。</text>
+      </view>
+
+      <view class="action-list">
+        <view wx:for="{{actionItems}}" wx:key="key" class="action-item">
+          <view class="action-icon-wrap">
+            <text class="action-icon">{{item.icon}}</text>
+          </view>
+          <view class="action-copy">
+            <text class="action-title">{{item.title}}</text>
+            <text class="action-desc">{{item.description}}</text>
+          </view>
+          <button
+            class="action-outline-button"
+            data-key="{{item.key}}"
+            bindtap="handleActionTap"
+          >
+            {{item.buttonText}}
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="card-surface problem-section">
+      <view class="section-head">
+        <text class="section-title">切换问题类型</text>
+        <text class="section-caption">当前高亮的是更接近本次异常的类型，也可以手动切换到更符合的场景。</text>
+      </view>
+
+      <scroll-view class="problem-scroll" scroll-x="true" show-scrollbar="false">
+        <view class="problem-row">
+          <view
+            wx:for="{{problemCards}}"
+            wx:key="key"
+            class="problem-choice-card {{item.active ? 'is-active' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="handleSelectProblem"
+          >
+            <view class="problem-icon-wrap">
+              <text class="problem-icon">{{item.icon}}</text>
+              <text wx:if="{{item.warn}}" class="problem-warn">!</text>
+            </view>
+            <text class="problem-choice-title">{{item.title}}</text>
+            <text class="problem-choice-desc">{{item.description}}</text>
+            <text class="problem-arrow">›</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="protection-panel">
+      <view class="protection-badge">
+        <text class="protection-badge-text">✓</text>
+      </view>
+      <view class="protection-copy">
+        <text class="protection-line protection-line-strong">系统异常导致的失败，不会扣减你的优化次数。</text>
+        <text class="protection-line">如果当前作品已有可用结果，会继续保留；AR 展示问题请从 AR 失败页处理。</text>
+      </view>
+    </view>
+
+    <view class="card-surface back-panel">
+      <text class="back-question">问题已解决？</text>
+      <button class="back-outline-button" bindtap="handleBackPrevious">← 返回上一页</button>
+    </view>
+  </view>
+</app-page-layout>

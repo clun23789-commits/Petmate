@@ -1,0 +1,80 @@
+<app-page-layout
+  title="{{navTitle}}"
+  show-back="{{true}}"
+  auto-back="{{false}}"
+  fallback-path="/pages/cases/index/index"
+  fallback-mode="switchTab"
+  content-class="page-shell-flush"
+  nav-size="compact"
+  bindback="handleBack"
+>
+<view class="conversion-page">
+  <view wx:if="{{loading}}" class="loading-spacer"></view>
+
+  <view wx:elif="{{isActive}}" class="conversion-content">
+    <view class="shared-hero-card">
+      <image class="shared-hero-image" src="{{hero.image}}" mode="aspectFill"></image>
+      <view class="shared-hero-overlay"></view>
+      <view class="shared-hero-copy">
+        <view class="pet-name-row">
+          <text class="pet-paw">宠</text>
+          <text class="pet-name">{{hero.petName}}</text>
+        </view>
+        <text wx:for="{{hero.subtitleLines}}" wx:key="*this" class="hero-subtitle">{{item}}</text>
+      </view>
+    </view>
+
+    <view class="steps-card">
+      <view class="steps-title-row">
+        <text class="steps-spark">步</text>
+        <text class="steps-title">只需 4 步，生成你的宠物数字形象</text>
+      </view>
+
+      <view class="steps-row">
+        <block wx:for="{{steps}}" wx:key="id">
+          <view class="step-item">
+            <view class="step-thumb-wrap">
+              <image class="step-thumb" src="{{item.image}}" mode="aspectFill"></image>
+              <text class="step-number">{{item.number}}</text>
+            </view>
+            <text class="step-title">{{item.title}}</text>
+            <text class="step-desc">{{item.desc}}</text>
+          </view>
+          <view wx:if="{{item.showArrow}}" class="step-arrow">›</view>
+        </block>
+      </view>
+    </view>
+
+    <view class="question-card">
+      <text class="question-heart">♡</text>
+      <text class="question-text">{{questionText}}</text>
+    </view>
+
+    <view class="cta-section">
+      <button class="primary-conversion-button" bindtap="handleStart" hover-class="none">
+        <text class="button-paw">宠</text>
+        <text class="button-label">{{primaryCtaText}}</text>
+      </button>
+      <button class="secondary-conversion-button" bindtap="handleCases" hover-class="none">{{secondaryCtaText}}</button>
+    </view>
+
+    <view class="bottom-tip">
+      <view class="bottom-tip-inner">
+        <text class="tip-icon">i</text>
+        <text class="tip-text">{{tipText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="invalid-wrap">
+    <error-state
+      title="{{invalidTitle}}"
+      description="{{invalidDescription}}"
+      primary-text="返回作品页"
+      secondary-text="查看案例"
+      bindprimary="handleHome"
+      bindsecondary="handleCases"
+    ></error-state>
+  </view>
+</view>
+</app-page-layout>

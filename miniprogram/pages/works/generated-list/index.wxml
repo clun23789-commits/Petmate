@@ -1,0 +1,186 @@
+<app-page-layout
+  title="已生成的宠物"
+  subtitle="你所有生成过的宠物作品都在这里"
+  show-back="{{true}}"
+>
+  <view class="generated-page">
+    <view class="rights-banner" bindtap="handleOpenBenefits">
+      <view class="rights-icon">✓</view>
+      <text class="rights-text">已购 AR 权益的作品可无限次进入 AR 展示，不会重复收费</text>
+      <text class="rights-arrow">›</text>
+    </view>
+
+    <error-state
+      wx:if="{{loadFailed}}"
+      title="作品列表暂时没有加载出来"
+      description="你可以重新检查一次本地数据，或稍后再回来查看。"
+      primary-text="重新加载"
+      secondary-text="开始新的创作"
+      bindprimary="handleRetry"
+      bindsecondary="handleStart"
+    ></error-state>
+
+    <empty-state
+      wx:elif="{{!works.length}}"
+      title="还没有生成宠物作品"
+      description="去开始创作，生成你的专属宠物数字形象吧"
+      action-text="开始创作"
+      bindaction="handleStart"
+    ></empty-state>
+
+    <view wx:else class="content-stack">
+      <view class="toolbar-row">
+        <view class="filter-tabs">
+          <view
+            wx:for="{{filters}}"
+            wx:key="key"
+            class="filter-tab {{activeFilter === item.key ? 'is-active' : ''}}"
+            data-filter="{{item.key}}"
+            bindtap="handleFilter"
+          >
+            <text>{{item.label}}</text>
+          </view>
+        </view>
+
+        <view class="sort-group">
+          <view class="sort-pill" bindtap="handleToggleSort">{{sortLabel}} ˅</view>
+          <view class="list-icon" bindtap="handleListModeHint">
+            <view class="list-line"></view>
+            <view class="list-line"></view>
+            <view class="list-line"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="list-heading">
+        <text class="list-title">作品列表</text>
+        <text class="list-count">（共 {{displayWorks.length}} 个）</text>
+      </view>
+
+      <view wx:if="{{displayWorks.length}}" class="work-list">
+        <view
+          wx:for="{{displayWorks}}"
+          wx:key="workId"
+          class="work-card tone-{{item.statusTone}}"
+          data-work-id="{{item.workId}}"
+          bindtap="handleOpen"
+        >
+          <image class="work-cover" src="{{item.cover}}" mode="aspectFill"></image>
+
+          <view class="work-main">
+            <view class="work-head">
+              <view class="name-row">
+                <text class="work-name">{{item.displayName}}</text>
+                <text class="edit-icon" data-work-id="{{item.workId}}" catchtap="handleEditName">✎</text>
+              </view>
+
+              <view class="right-area">
+                <text wx:if="{{item.showArBadge}}" class="ar-badge ar-badge-{{item.arTagTone}}">{{item.arTagText}}</text>
+                <text class="chevron">›</text>
+              </view>
+            </view>
+
+            <text class="work-time">{{item.createdAtText}} 生成</text>
+
+            <view class="status-pill status-{{item.statusTone}}">
+              <text class="status-icon">{{item.statusIcon}}</text>
+              <text>{{item.statusLabel}}</text>
+            </view>
+
+            <text wx:if="{{item.hintText}}" class="work-hint">{{item.hintText}}</text>
+
+            <view wx:if="{{item.canViewResult}}" class="action-row">
+              <view
+                class="action-item"
+                data-work-id="{{item.workId}}"
+                data-version-id="{{item.versionId}}"
+                catchtap="handleViewResult"
+              >
+                <text class="action-symbol">▣</text>
+                <text>查看结果</text>
+              </view>
+              <view
+                class="action-item"
+                data-work-id="{{item.workId}}"
+                data-version-id="{{item.versionId}}"
+                catchtap="handleOptimize"
+              >
+                <text class="action-symbol">✦</text>
+                <text>继续优化</text>
+              </view>
+              <view
+                wx:if="{{item.canEnterAr}}"
+                class="action-item"
+                data-work-id="{{item.workId}}"
+                catchtap="handleEnterAr"
+              >
+                <text class="action-symbol">AR</text>
+                <text>进入 AR</text>
+              </view>
+              <view
+                wx:if="{{item.canUnderstandAr}}"
+                class="action-item"
+                data-work-id="{{item.workId}}"
+                catchtap="handleUnderstandAr"
+              >
+                <text class="action-symbol">AR</text>
+                <text>了解 AR</text>
+              </view>
+              <view
+                class="action-item action-item-share {{sharePreparingWorkId === item.workId ? 'is-preparing' : ''}}"
+                data-work-id="{{item.workId}}"
+                catchtap="handleShare"
+              >
+                <text class="action-symbol">↗</text>
+                <text>{{sharePreparingWorkId === item.workId ? '准备中...' : '分享'}}</text>
+              </view>
+              <button
+                wx:if="{{activeShareWorkId === item.workId && activeSharePayload}}"
+                class="action-item share-send-button"
+                open-type="share"
+                data-work-id="{{item.workId}}"
+                catchtap="handleShareSendTap"
+              >
+                <text class="action-symbol">发</text>
+                <text>发送给朋友</text>
+              </button>
+            </view>
+
+            <button
+              wx:if="{{item.canRegenerate}}"
+              class="regenerate-button"
+              data-work-id="{{item.workId}}"
+              catchtap="handleRegenerate"
+            >
+              重新生成
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view wx:else class="filter-empty-card">
+        <view class="filter-empty-badge">筛</view>
+        <text class="filter-empty-title">当前筛选下还没有作品</text>
+        <text class="filter-empty-desc">可以切换其他状态查看，或去开始新的创作。</text>
+        <button class="filter-empty-button" bindtap="handleStart">开始创作</button>
+      </view>
+
+      <view class="more-card">
+        <view class="more-visual">
+          <view class="more-box"></view>
+          <image class="more-pet" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+        </view>
+        <view class="more-copy">
+          <text class="more-title">还没有更多作品</text>
+          <text class="more-desc">去开始创作，生成你的专属宠物数字形象吧</text>
+        </view>
+        <button class="more-start-button" bindtap="handleStart">开始创作</button>
+      </view>
+
+      <view class="bottom-note">
+        <view class="note-icon">i</view>
+        <text class="note-text">不同作品之间 AR 权益不互通，需为每个作品单独解锁。</text>
+      </view>
+    </view>
+  </view>
+</app-page-layout>

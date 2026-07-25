@@ -1,0 +1,42 @@
+<view wx:if="{{visible}}" class="nickname-mask" catchtouchmove="noop">
+  <view class="nickname-dialog" catchtap="noop">
+    <view class="dialog-header">
+      <text class="dialog-title">修改昵称</text>
+      <button class="close-button" bindtap="handleCancel" hover-class="button-hover">×</button>
+    </view>
+
+    <view class="current-row">
+      <text class="field-label">当前昵称</text>
+      <text class="current-name">{{currentDisplayName}}</text>
+    </view>
+
+    <view class="edit-row">
+      <text class="field-label">新昵称</text>
+      <view class="input-shell">
+        <input
+          class="nickname-input"
+          value="{{innerValue}}"
+          placeholder="请输入新昵称"
+          placeholder-class="input-placeholder"
+          maxlength="12"
+          confirm-type="done"
+          bindinput="handleInput"
+          bindconfirm="handleSave"
+        />
+        <button
+          wx:if="{{innerValue}}"
+          class="clear-button"
+          bindtap="handleClear"
+          hover-class="button-hover"
+        >
+          ×
+        </button>
+      </view>
+    </view>
+
+    <text class="rule-text">昵称支持 2-12 个字，不可包含敏感词或特殊符号</text>
+
+    <button class="save-button" bindtap="handleSave" hover-class="button-hover">保存</button>
+    <button class="cancel-button" bindtap="handleCancel" hover-class="button-hover">取消</button>
+  </view>
+</view>

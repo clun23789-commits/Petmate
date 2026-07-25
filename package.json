@@ -1,0 +1,22 @@
+{
+  "name": "petmate-mini",
+  "version": "1.5.0",
+  "private": true,
+  "description": "Petmate 微信小程序开发版",
+  "scripts": {
+    "env:development": "node ./tools/sync-env-config.mjs --env=development",
+    "env:staging": "node ./tools/sync-env-config.mjs --env=staging",
+    "env:production": "node ./tools/sync-env-config.mjs --env=production",
+    "build:miniprogram": "node ./tools/build-miniprogram.mjs",
+    "check:structure": "node ./tools/check-structure.mjs",
+    "check:page-structure": "node ./tools/check-page-structure.mjs",
+    "check:product": "node ./tools/check-product-boundaries.mjs",
+    "check:mock-boundary": "node ./tools/check-mock-boundary.mjs",
+    "check:auth": "node ./tools/check-auth-contract.mjs",
+    "check:runtime-config": "node ./tools/check-runtime-config.mjs",
+    "check:generation-task": "node ./tools/check-generation-task-contract.mjs",
+    "check:production-readiness": "node ./tools/check-production-readiness.mjs",
+    "check": "npm run check:structure && npm run check:page-structure && npm run check:product && npm run check:mock-boundary && npm run check:auth && npm run check:runtime-config && npm run check:generation-task && npm run build:miniprogram",
+    "release:precheck": "npm run check && npm run check:production-readiness"
+  }
+}

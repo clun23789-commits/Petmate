@@ -1,0 +1,27 @@
+<view class="action-bar {{fixed ? 'is-fixed' : ''}} {{safeArea ? 'is-safe' : ''}} action-bar-{{layout}}">
+  <text wx:if="{{hint}}" class="action-bar-hint">{{hint}}</text>
+  <view class="action-bar-buttons">
+    <secondary-button
+      wx:if="{{secondaryText}}"
+      text="{{secondaryText}}"
+      subtext="{{secondarySubtext}}"
+      disabled="{{secondaryDisabled}}"
+      loading="{{secondaryLoading}}"
+      block="{{true}}"
+      size="medium"
+      variant="{{secondaryVariant}}"
+      bindpress="handleSecondary"
+    ></secondary-button>
+    <primary-button
+      wx:if="{{primaryText}}"
+      text="{{primaryText}}"
+      subtext="{{primarySubtext}}"
+      disabled="{{primaryDisabled}}"
+      loading="{{primaryLoading}}"
+      block="{{true}}"
+      size="medium"
+      tone="{{primaryTone}}"
+      bindpress="handlePrimary"
+    ></primary-button>
+  </view>
+</view>

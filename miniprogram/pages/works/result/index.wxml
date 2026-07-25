@@ -1,0 +1,221 @@
+<app-page-layout title="生成结果" show-back="{{true}}" auto-back="{{false}}" bindback="handleBackWorks">
+  <view wx:if="{{work && version}}" class="stack result-page result-page--batch5">
+    <view class="hero-card">
+      <button class="share-button" disabled="{{shareStatus === 'loading'}}" bindtap="handleShare">
+        {{shareStatus === 'loading' ? '准备中' : shareReady ? '已准备' : '分享'}}
+      </button>
+
+      <view class="hero-stage">
+        <view class="hero-stage-shadow"></view>
+        <view class="hero-stage-ring hero-stage-ring-outer"></view>
+        <view class="hero-stage-ring hero-stage-ring-inner"></view>
+        <view class="hero-stage-platform"></view>
+        <image
+          class="hero-pet-image"
+          src="{{version ? version.previewMedia.cover : '/assets/mock/pet-corgi-hero.png'}}"
+          mode="aspectFit"
+        ></image>
+      </view>
+
+      <view class="hero-note">
+        <text class="hero-note-label">当前结果</text>
+        <text class="hero-note-text">{{latestNote || '先看看整体像不像，再选择需要优化的地方。'}}</text>
+      </view>
+    </view>
+
+    <view class="result-meta-row">
+      <view class="pet-title-wrap">
+        <view class="paw-badge">爪</view>
+        <text class="pet-name">{{petNameText}}</text>
+        <text class="meta-dot">·</text>
+        <view class="generated-badge">已生成</view>
+        <view wx:if="{{arOwned}}" class="overview-tag overview-tag-success">当前作品 AR 已解锁</view>
+        <view class="overview-tag">{{resultStatusLabel}}</view>
+      </view>
+      <view class="quota-pill {{quotaEmpty ? 'quota-pill-empty' : ''}}">
+        <text class="quota-pill-text">{{quotaText}}</text>
+      </view>
+    </view>
+
+    <view class="result-notice-stack">
+      <view wx:if="{{showQuotaSyncNotice}}" class="quota-sync-card">
+        <text class="quota-sync-title">优化次数暂时未同步</text>
+        <text class="quota-sync-message">{{quotaSyncMessage}}</text>
+      </view>
+
+      <view wx:if="{{showCloudSaveNotice}}" class="cloud-save-card cloud-save-card-{{cloudSaveNoticeTone}}">
+        <view class="cloud-save-icon">{{cloudSaveNoticeTone === 'warning' ? '!' : '存'}}</view>
+        <view class="cloud-save-copy">
+          <text class="cloud-save-title">{{cloudSaveTitle}}</text>
+          <text class="cloud-save-message">{{cloudSaveMessage}}</text>
+        </view>
+        <button
+          wx:if="{{cloudSaveCanRetry}}"
+          class="cloud-save-retry"
+          loading="{{cloudSaveRetrying}}"
+          disabled="{{cloudSaveRetrying}}"
+          bindtap="handleRetryCloudSave"
+        >重新保存</button>
+      </view>
+
+      <view wx:if="{{showBasicResultNotice}}" class="basic-result-notice basic-result-notice-{{resultStatusTone}}">
+        <view class="basic-result-icon">OK</view>
+        <view class="basic-result-copy">
+          <text class="basic-result-title">{{basicResultNoticeTitle}}</text>
+          <text class="basic-result-message">{{basicResultNoticeMessage}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="action-grid">
+      <view class="action-card action-card-primary" bindtap="handleOpenFeedback">
+        <view class="action-icon action-icon-primary">判</view>
+        <text class="action-title action-title-primary">判断哪里不太像</text>
+        <text class="action-copy action-copy-primary">先选出差异，再决定是否提交本轮优化</text>
+      </view>
+
+      <view class="action-card" bindtap="handleRetouch">
+        <view class="action-icon">色</view>
+        <text class="action-title">细节补色</text>
+        <text class="action-copy">只处理局部颜色和小面积瑕疵</text>
+      </view>
+
+      <view wx:if="{{showArEntry}}" class="action-card" bindtap="handleEnterAr">
+        <view class="action-icon">AR</view>
+        <text class="action-title">进入 AR</text>
+        <text class="action-copy">{{arActionText}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{shareReady}}" class="share-inline-card share-inline-card-success">
+      <view class="share-card-head">
+        <view class="share-card-icon">分享</view>
+        <view class="stack share-card-copy">
+          <text class="share-card-title">分享卡片已经准备好</text>
+          <text class="caption">{{shareHint}}</text>
+          <text wx:if="{{sharePayload}}" class="share-card-meta">{{sharePayload ? sharePayload.preview.title : ''}}</text>
+        </view>
+      </view>
+      <button class="share-send-button" open-type="share">发送给朋友</button>
+    </view>
+
+    <view wx:elif="{{shareStatus === 'error' && shareErrorText}}" class="share-inline-card share-inline-card-error">
+      <view class="share-card-head">
+        <view class="share-card-icon share-card-icon-error">!</view>
+        <view class="stack share-card-copy">
+          <text class="share-card-title">分享暂时没有准备好</text>
+          <text class="caption">{{shareErrorText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="feedback-summary-card" bindtap="handleOpenFeedback">
+      <view class="feedback-summary-head">
+        <view class="stack feedback-summary-copy">
+          <text class="section-title">帮我们判断哪里还不太像</text>
+          <text class="caption">选择反馈本身不会扣次数，确认提交有效优化后才会预占。</text>
+        </view>
+        <text class="feedback-summary-link">{{feedbackSummaryLinkText}}</text>
+      </view>
+
+      <view class="feedback-chip-row">
+        <view
+          wx:for="{{summaryFeedbackChips}}"
+          wx:key="dimension"
+          class="feedback-chip feedback-chip--{{item.tone}} {{item.active ? 'feedback-chip--active' : ''}}"
+        >
+          <text class="feedback-chip-text">{{item.chipText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{showFeedbackPanel}}" class="feedback-panel">
+      <view class="between feedback-panel-head">
+        <view class="stack feedback-heading">
+          <text class="section-title">完整反馈</text>
+          <text class="caption">{{feedbackPanelHint}}</text>
+        </view>
+        <view class="feedback-count {{unlikeCount ? 'feedback-count-active' : ''}}">
+          已选 {{unlikeCount}} 项
+        </view>
+      </view>
+
+      <view class="feedback-list">
+        <view wx:for="{{feedbackCards}}" wx:key="dimension" class="feedback-item">
+          <view class="feedback-copy">
+            <text class="feedback-label">{{item.label}}</text>
+            <text class="feedback-status">{{item.statusText}}</text>
+          </view>
+
+          <view class="feedback-actions">
+            <view
+              class="feedback-pill {{item.likeActive ? 'is-active is-soft' : ''}}"
+              data-dimension="{{item.dimension}}"
+              bindtap="handleLike"
+            >
+              像
+            </view>
+            <view
+              class="feedback-pill {{item.unlikeActive ? 'is-active is-brand' : ''}}"
+              data-dimension="{{item.dimension}}"
+              bindtap="handleUnlike"
+            >
+              不太像
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{showSuggestionList}}" class="suggestion-list">
+      <view class="stack suggestion-header">
+        <text class="section-title">补图建议</text>
+        <text class="caption">如果某个维度信息不够，系统会引导你补充更合适的照片视角。</text>
+      </view>
+
+      <view wx:for="{{suggestions}}" wx:key="dimension" class="suggestion-card">
+        <view class="suggestion-main">
+          <view class="suggestion-icon">补</view>
+          <view class="stack suggestion-copy">
+            <text class="section-title">{{item.title}}</text>
+            <text class="caption">{{item.reason}}</text>
+            <text class="suggestion-footnote">补图完成后再回来提交，本轮反馈会继续保留。</text>
+          </view>
+        </view>
+        <view class="mini-link" data-dimension="{{item.dimension}}" bindtap="handleSuggestionAction">去补图</view>
+      </view>
+    </view>
+
+    <view class="quota-rule-card quota-rule-compact">
+      <view class="quota-rule-head">
+        <view class="quota-rule-icon">保</view>
+        <view class="stack quota-rule-copy">
+          <text class="section-title">优化次数说明</text>
+          <text class="caption">{{quotaRuleSummary}}</text>
+        </view>
+      </view>
+
+      <view class="quota-rule-list">
+        <view class="quota-rule-item">
+          <view class="quota-rule-dot"></view>
+          <text class="quota-rule-text">只选择反馈、查看建议或取消，不会预占也不会扣减次数。</text>
+        </view>
+      </view>
+    </view>
+
+    <primary-button
+      wx:if="{{showSubmitOptimizeButton}}"
+      text="提交并优化"
+      subtext="{{optimizeButtonSubtext}}"
+      bindpress="handleOptimize"
+    ></primary-button>
+  </view>
+
+  <error-state
+    wx:else
+    title="生成结果暂时不可用"
+    description="这份作品可能已被删除，或当前结果数据尚未准备好。"
+    primary-text="返回作品页"
+    bindprimary="handleBackWorks"
+  ></error-state>
+</app-page-layout>

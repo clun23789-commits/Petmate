@@ -1,0 +1,120 @@
+<view class="help-detail-page">
+  <top-nav title="帮助详情" show-back="{{true}}" show-capsule="{{true}}" bindback="handleBack"></top-nav>
+
+  <view class="detail-content">
+    <view wx:if="{{loading}}" class="state-card">
+      <text class="state-title">正在准备帮助详情...</text>
+      <text class="state-desc">马上就能看到这个问题的答案与处理步骤。</text>
+    </view>
+
+    <view wx:elif="{{hasError}}" class="state-card">
+      <image class="state-pet" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+      <text class="state-title">没有找到这条帮助内容</text>
+      <text class="state-desc">可能是链接已失效，可以返回帮助中心重新选择问题。</text>
+      <view class="state-actions">
+        <button class="state-button state-button-ghost" bindtap="handleBackHelp" hover-class="none">返回帮助中心</button>
+        <button class="state-button state-button-primary" bindtap="handleReloadDefault" hover-class="none">查看热门问题</button>
+      </view>
+    </view>
+
+    <block wx:elif="{{article}}">
+      <view class="help-hero">
+        <view class="hero-copy">
+          <view class="hero-tag">{{article.tag}}</view>
+          <text class="hero-title">{{article.title}}</text>
+          <text class="hero-subtitle">{{article.subtitle}}</text>
+        </view>
+
+        <view class="hero-visual" aria-hidden="true">
+          <view class="shield-mark">✓</view>
+          <view class="hero-leaf hero-leaf-left"></view>
+          <view class="hero-leaf hero-leaf-right"></view>
+          <image class="hero-cat-image" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+        </view>
+      </view>
+
+      <view class="detail-card answer-card">
+        <view class="card-heading">
+          <view class="heading-icon check-icon">✓</view>
+          <text class="heading-title">答案</text>
+        </view>
+
+        <view class="answer-body">
+          <text wx:for="{{article.answerText}}" wx:key="*this" class="answer-paragraph">{{item}}</text>
+        </view>
+      </view>
+
+      <view class="detail-card steps-card">
+        <view class="card-heading">
+          <view class="heading-icon bulb-icon">☼</view>
+          <text class="heading-title">操作步骤</text>
+        </view>
+
+        <view class="steps-list">
+          <view wx:for="{{article.steps}}" wx:key="index" class="step-row">
+            <view class="step-track">
+              <view class="step-number">{{item.index}}</view>
+              <view wx:if="{{!item.isLast}}" class="step-line"></view>
+            </view>
+
+            <view class="step-content">
+              <view class="step-icon-wrap">
+                <text class="step-icon">{{item.iconText}}</text>
+              </view>
+              <view class="step-copy">
+                <text class="step-title">{{item.title}}</text>
+                <text class="step-desc">{{item.desc}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="detail-card related-card">
+        <view class="related-head">
+          <view class="related-title-wrap">
+            <view class="heading-icon question-icon">?</view>
+            <text class="heading-title related-heading-title">相关问题推荐</text>
+          </view>
+          <button class="refresh-button" bindtap="handleRefreshRelated" hover-class="none">换一换 ↻</button>
+        </view>
+
+        <view class="related-list">
+          <view
+            wx:for="{{relatedQuestions}}"
+            wx:key="id"
+            class="related-item"
+            data-article-id="{{item.id}}"
+            bindtap="handleRelated"
+          >
+            <text class="related-text">{{item.title}}</text>
+            <text class="related-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="feedback-card">
+        <view class="feedback-pet" aria-hidden="true">
+          <image class="feedback-cat-image" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+        </view>
+
+        <view class="feedback-copy">
+          <view class="feedback-title-row">
+            <view class="feedback-question">?</view>
+            <text class="feedback-title">还有问题需要帮助？</text>
+          </view>
+          <text class="feedback-desc">如果没有找到你想要的答案，可以继续提交反馈并附上截图。</text>
+        </view>
+
+        <button class="feedback-button" bindtap="handleFeedback" hover-class="none">提交反馈 ›</button>
+      </view>
+
+      <view class="back-help" bindtap="handleBackHelp">
+        <text class="back-help-icon">⌂</text>
+        <text>返回帮助中心</text>
+      </view>
+
+      <view class="safe-bottom"></view>
+    </block>
+  </view>
+</view>

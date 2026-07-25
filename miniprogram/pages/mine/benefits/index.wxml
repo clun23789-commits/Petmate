@@ -1,0 +1,156 @@
+<app-page-layout
+  title="权益说明"
+  show-back="{{true}}"
+  fallback-path="/pages/mine/index/index"
+  fallback-mode="switchTab"
+  content-class="page-shell-flush"
+  nav-size="compact"
+>
+<view class="benefits-page">
+  <view class="benefits-content">
+    <view class="hero-card">
+      <view class="hero-copy">
+        <text class="hero-title">当前宠物作品</text>
+        <text class="hero-title hero-title-green">AR 展示权益说明</text>
+        <text class="hero-desc">为你当前确认满意的宠物作品</text>
+        <text class="hero-desc">解锁 AR 展示能力，带它进入真实世界</text>
+      </view>
+
+      <view class="hero-visual" aria-hidden="true">
+        <view class="scan-corner scan-corner-tl"></view>
+        <view class="scan-corner scan-corner-tr"></view>
+        <view class="scan-corner scan-corner-bl"></view>
+        <view class="scan-corner scan-corner-br"></view>
+        <view class="ar-badge">AR</view>
+        <image class="hero-pet" src="{{petPreview}}" mode="aspectFit"></image>
+        <view class="hero-platform"></view>
+      </view>
+    </view>
+
+    <view class="quota-overview-card">
+      <view class="quota-overview-head">
+        <text class="card-title">优化次数</text>
+        <text wx:if="{{showQuotaSyncNotice}}" class="quota-sync-hint">{{quotaError}}</text>
+      </view>
+      <view class="quota-stat-grid">
+        <view class="quota-stat-item">
+          <text class="quota-stat-value">{{optimizeGranted}}</text>
+          <text class="quota-stat-label">已获得优化次数</text>
+        </view>
+        <view class="quota-stat-item">
+          <text class="quota-stat-value">{{optimizeUsed}}</text>
+          <text class="quota-stat-label">已使用优化次数</text>
+        </view>
+        <view class="quota-stat-item">
+          <text class="quota-stat-value">{{optimizeReserved}}</text>
+          <text class="quota-stat-label">进行中的优化次数</text>
+        </view>
+        <view class="quota-stat-item quota-stat-item-available">
+          <text class="quota-stat-value">{{optimizeAvailable}}</text>
+          <text class="quota-stat-label">当前可用优化次数</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="rule-card rights-layer-card">
+      <text class="card-title">权益类型区别</text>
+      <text class="card-subtitle">免费浏览、广告试用和当前作品 AR 权益各自独立，不是统一账户套餐。</text>
+      <view class="scope-list">
+        <view wx:for="{{rightsLayerItems}}" wx:key="id" class="scope-row {{index === rightsLayerItems.length - 1 ? 'scope-row-last' : ''}}">
+          <view class="scope-icon">{{item.icon}}</view>
+          <view class="scope-copy">
+            <text class="scope-title">{{item.title}}</text>
+            <text class="scope-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="rule-card included-card">
+      <text class="card-title">你将获得什么？</text>
+      <text class="card-subtitle">购买成功后，该宠物作品将获得以下 AR 权益：</text>
+
+      <view class="benefit-grid">
+        <view
+          wx:for="{{includedBenefits}}"
+          wx:key="id"
+          class="benefit-item"
+        >
+          <view class="benefit-icon">{{item.icon}}</view>
+          <text class="benefit-title">{{item.title}}</text>
+          <text class="benefit-desc">{{item.desc}}</text>
+        </view>
+      </view>
+
+      <view class="included-note">
+        <text class="note-heart">♡</text>
+        <text>适合想在真实生活中展示、分享和纪念爱宠的你</text>
+        <text class="note-paw">爪</text>
+      </view>
+    </view>
+
+    <view class="rule-card scope-card">
+      <text class="card-title">权益适用范围</text>
+      <view class="scope-list">
+        <view
+          wx:for="{{scopeRules}}"
+          wx:key="id"
+          class="scope-row {{item.isLast ? 'scope-row-last' : ''}}"
+        >
+          <view class="scope-icon">{{item.icon}}</view>
+          <view class="scope-copy">
+            <text class="scope-title">{{item.title}}</text>
+            <text class="scope-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="rule-card excluded-card">
+      <text class="card-title excluded-title">不包含的内容</text>
+      <view class="excluded-grid">
+        <view
+          wx:for="{{excludedItems}}"
+          wx:key="id"
+          class="excluded-item"
+        >
+          <view class="excluded-icon">{{item.icon}}</view>
+          <text class="excluded-item-title">{{item.title}}</text>
+          <text class="excluded-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="help-card">
+      <view class="help-left">
+        <view class="help-icon">
+          <view class="headset-arc"></view>
+          <view class="headset-dot headset-dot-left"></view>
+          <view class="headset-dot headset-dot-right"></view>
+        </view>
+        <view class="help-copy">
+          <text class="help-title">还有疑问？</text>
+          <view class="help-desc">
+            <text>查看 </text>
+            <text class="help-link" bindtap="handleGoHelp">帮助中心</text>
+            <text> 或 </text>
+            <text class="help-link" bindtap="handleGoContact">联系我们</text>
+            <text>，获取更多支持</text>
+          </view>
+        </view>
+      </view>
+      <button class="help-button" bindtap="handleGoHelp" hover-class="button-hover">
+        <text>去帮助中心</text>
+        <text class="button-arrow">›</text>
+      </button>
+    </view>
+
+    <button class="return-button" bindtap="handleBackMine" hover-class="button-hover">
+      <text class="return-arrow">←</text>
+      <text>返回我的页</text>
+    </button>
+
+    <view class="safe-bottom"></view>
+  </view>
+</view>
+</app-page-layout>

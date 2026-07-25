@@ -1,0 +1,67 @@
+@import "../../styles/layout.wxss";
+@import "../../styles/page.wxss";
+
+.error-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  text-align: center;
+  align-items: center;
+}
+
+.error-shell.is-compact {
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-card-soft);
+}
+
+.error-visual {
+  width: 190rpx;
+  height: 190rpx;
+  border-radius: var(--radius-xxl);
+  background: var(--gradient-error-visual);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.error-image {
+  width: 100%;
+  height: 100%;
+}
+
+.error-mark {
+  color: var(--color-danger);
+  font-size: 68rpx;
+  font-weight: 700;
+}
+
+.error-tone-warning .error-visual {
+  background: var(--gradient-warning-soft);
+}
+
+.error-tone-warning .error-mark {
+  color: var(--color-warning);
+}
+
+.error-tone-info .error-visual {
+  background: var(--color-bg-info);
+}
+
+.error-tone-info .error-mark {
+  color: var(--color-info);
+}
+
+.error-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+}

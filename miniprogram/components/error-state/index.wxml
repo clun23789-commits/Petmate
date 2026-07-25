@@ -1,0 +1,28 @@
+<view class="card error-shell error-tone-{{tone}} {{compact ? 'is-compact' : ''}}">
+  <view class="error-visual">
+    <image wx:if="{{image}}" class="error-image" src="{{image}}" mode="aspectFill"></image>
+    <view wx:else class="error-mark">{{iconText}}</view>
+  </view>
+  <view class="error-copy">
+    <text class="section-title">{{title}}</text>
+    <text wx:if="{{description}}" class="caption">{{description}}</text>
+  </view>
+  <view wx:if="{{primaryText || secondaryText}}" class="error-actions">
+    <primary-button
+      wx:if="{{primaryText}}"
+      text="{{primaryText}}"
+      subtext="{{primarySubtext}}"
+      size="{{compact ? 'medium' : 'large'}}"
+      tone="{{tone === 'danger' ? 'danger' : 'brand'}}"
+      bindpress="handlePrimary"
+    ></primary-button>
+    <secondary-button
+      wx:if="{{secondaryText}}"
+      text="{{secondaryText}}"
+      subtext="{{secondarySubtext}}"
+      size="{{compact ? 'medium' : 'large'}}"
+      tone="{{tone === 'danger' ? 'danger' : 'neutral'}}"
+      bindpress="handleSecondary"
+    ></secondary-button>
+  </view>
+</view>

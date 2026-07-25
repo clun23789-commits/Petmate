@@ -1,0 +1,166 @@
+<view class="search-page">
+  <top-nav
+    title="搜索案例"
+    subtitle="搜索你感兴趣的宠物数字形象与 AR 展示案例"
+    show-back="{{true}}"
+    show-capsule="{{true}}"
+    bindback="handleBack"
+  ></top-nav>
+
+  <view class="search-content">
+    <view class="search-bar">
+      <text class="search-icon">⌕</text>
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="搜索猫咪、狗狗、AR 展示、花纹还原..."
+        placeholder-class="search-placeholder"
+        confirm-type="search"
+        bindinput="handleInput"
+        bindconfirm="handleSearch"
+      />
+      <button class="search-submit" bindtap="handleSearch" hover-class="none">搜索</button>
+    </view>
+
+    <view class="keyword-section">
+      <text class="block-title">热门搜索</text>
+      <view class="hot-list">
+        <button
+          wx:for="{{hotKeywords}}"
+          wx:key="id"
+          class="hot-chip"
+          data-keyword="{{item.text}}"
+          bindtap="handleHotKeyword"
+          hover-class="none"
+        >
+          <text class="hot-icon">{{item.icon}}</text>
+          <text>{{item.text}}</text>
+        </button>
+      </view>
+    </view>
+
+    <view class="keyword-section history-section">
+      <view class="section-head">
+        <text class="block-title">搜索历史</text>
+        <button
+          wx:if="{{searchHistory.length}}"
+          class="clear-history"
+          bindtap="handleClearHistory"
+          hover-class="none"
+        >
+          <text class="clear-icon">♧</text>
+          <text>清空记录</text>
+        </button>
+      </view>
+
+      <view wx:if="{{searchHistory.length}}" class="history-list">
+        <view wx:for="{{searchHistory}}" wx:key="*this" class="history-chip">
+          <text class="history-text" data-keyword="{{item}}" bindtap="handleHistoryKeyword">{{item}}</text>
+          <text class="history-remove" data-keyword="{{item}}" catchtap="handleRemoveHistory">×</text>
+        </view>
+      </view>
+      <view wx:else class="history-empty">暂无搜索历史</view>
+    </view>
+
+    <view class="results-section">
+      <view class="section-head">
+        <text class="block-title">搜索结果</text>
+        <text class="result-count">{{resultCountText}}</text>
+      </view>
+
+      <view wx:if="{{isLoading}}" class="loading-card">
+        <text class="loading-title">正在搜索相关案例...</text>
+        <text class="loading-desc">马上帮你把合适的宠物数字形象案例筛出来。</text>
+      </view>
+
+      <view wx:elif="{{loadFailed}}" class="search-failed-card">
+        <text class="failed-title">搜索暂时没有成功</text>
+        <text class="failed-desc">案例数据暂时没准备好，重新试一次就好。</text>
+        <button class="failed-button" bindtap="handleRetrySearch" hover-class="none">重新搜索</button>
+      </view>
+
+      <block wx:elif="{{!isEmpty}}">
+        <view
+          wx:for="{{results}}"
+          wx:key="id"
+          class="result-card"
+          data-id="{{item.id}}"
+          data-type="{{item.type}}"
+          data-case-id="{{item.caseId}}"
+          data-video-id="{{item.videoId}}"
+          bindtap="handleResult"
+        >
+          <view class="result-cover">
+            <image class="result-image" src="{{item.image}}" mode="aspectFill"></image>
+            <view wx:if="{{item.arBadge}}" class="ar-badge">
+              <text class="ar-cube">▧</text>
+              <text>AR</text>
+            </view>
+            <view class="duration-badge">
+              <text class="play-icon">▶</text>
+              <text>{{item.duration}}</text>
+            </view>
+          </view>
+
+          <view class="result-info">
+            <text class="result-title">{{item.title}}</text>
+
+            <view class="result-tags">
+              <text wx:for="{{item.visibleTags}}" wx:for-item="tag" wx:key="*this" class="result-tag">{{tag}}</text>
+            </view>
+
+            <text class="result-summary">{{item.summary}}</text>
+
+            <view class="result-footer">
+              <view class="author-row">
+                <image class="author-avatar" src="{{item.authorAvatar}}" mode="aspectFill"></image>
+                <text class="author-name">{{item.authorName}}</text>
+              </view>
+
+              <view class="heat-row">
+                <text class="heat-icon">♡</text>
+                <text>{{item.heatText}}</text>
+              </view>
+
+              <button
+                class="detail-button"
+                data-id="{{item.id}}"
+                data-type="{{item.type}}"
+                data-case-id="{{item.caseId}}"
+                data-video-id="{{item.videoId}}"
+                catchtap="handleResult"
+                hover-class="none"
+              >
+                查看详情
+              </button>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <view wx:else class="empty-result-card">
+        <image class="empty-pet" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+        <view class="empty-copy">
+          <text class="empty-title">暂时没有找到相关案例</text>
+          <text class="empty-desc">换个关键词试试看吧～</text>
+          <button class="empty-button" bindtap="handleHotCases" hover-class="none">
+            <text class="empty-button-icon">♛</text>
+            <text>浏览热门案例</text>
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-actions">
+      <view class="bottom-action" bindtap="handleBackToCases">
+        <text class="bottom-icon">⌂</text>
+        <text>返回案例页</text>
+      </view>
+      <view class="bottom-divider"></view>
+      <view class="bottom-action" bindtap="handleHotCases">
+        <text class="bottom-icon">♨</text>
+        <text>热门案例</text>
+      </view>
+    </view>
+  </view>
+</view>

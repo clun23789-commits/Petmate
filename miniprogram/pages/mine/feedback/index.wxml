@@ -1,0 +1,111 @@
+<view class="feedback-page">
+  <top-nav title="投诉与反馈" show-back="{{true}}" show-capsule="{{true}}" bindback="handleBack"></top-nav>
+
+  <view class="feedback-content">
+    <view class="hero-card">
+      <view class="hero-copy">
+        <text class="hero-title">告诉我们你遇到的问题</text>
+        <text class="hero-subtitle">我们会尽快查看，并持续优化产品体验。</text>
+      </view>
+      <view class="hero-visual" aria-hidden="true">
+        <view class="hero-shield">✓</view>
+        <view class="hero-leaf hero-leaf-left"></view>
+        <view class="hero-leaf hero-leaf-right"></view>
+        <image class="hero-cat" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view wx:if="{{submitFailed}}" class="submit-failed-card">
+      <text class="failed-title">提交暂未成功</text>
+      <text class="failed-desc">我们已经为你保留当前输入内容，你可以稍后再试，不需要重新填写。</text>
+    </view>
+
+    <view class="section-block">
+      <text class="section-title">反馈类型</text>
+      <view class="type-grid">
+        <view
+          wx:for="{{feedbackTypes}}"
+          wx:key="key"
+          class="type-card {{selectedType === item.key ? 'type-card-active' : ''}}"
+          data-type="{{item.key}}"
+          data-label="{{item.label}}"
+          bindtap="handleSelectType"
+        >
+          <view class="type-icon {{item.iconClass}}">
+            <text>{{item.icon}}</text>
+          </view>
+          <text class="type-label">{{item.label}}</text>
+          <view wx:if="{{selectedType === item.key}}" class="type-check">✓</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-block">
+      <text class="section-title">问题描述</text>
+      <view class="textarea-wrap">
+        <textarea
+          class="description-input"
+          value="{{content}}"
+          maxlength="500"
+          placeholder="请尽量描述问题发生的页面、操作步骤和现象"
+          placeholder-class="input-placeholder"
+          bindinput="handleContentInput"
+        ></textarea>
+        <text class="word-count">{{contentLength}}/500</text>
+      </view>
+    </view>
+
+    <view class="section-block">
+      <view class="section-heading-row">
+        <text class="section-title">上传截图</text>
+        <text class="section-optional">（选填）</text>
+        <text class="section-tip">最多上传 3 张，支持 JPG、PNG，单张不超过 5MB</text>
+      </view>
+
+      <view class="screenshot-list">
+        <view wx:for="{{screenshots}}" wx:key="path" class="screenshot-item">
+          <image class="screenshot-image" src="{{item.path}}" mode="aspectFill"></image>
+          <button class="remove-image" data-index="{{index}}" catchtap="handleRemoveImage" hover-class="none">×</button>
+        </view>
+
+        <view wx:if="{{screenshots.length < maxScreenshotCount}}" class="add-image-card" bindtap="handleChooseImage">
+          <text class="add-image-plus">＋</text>
+          <text class="add-image-text">添加图片</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-block">
+      <view class="section-heading-row">
+        <text class="section-title">联系方式</text>
+        <text class="section-optional">（选填）</text>
+      </view>
+      <view class="contact-input-wrap">
+        <input
+          class="contact-input"
+          value="{{contact}}"
+          maxlength="60"
+          placeholder="手机号 / 微信号 / 邮箱"
+          placeholder-class="input-placeholder"
+          bindinput="handleContactInput"
+        />
+      </view>
+    </view>
+
+    <view class="notice-card">
+      <view class="notice-icon">i</view>
+      <text class="notice-text">提交后会进入问题排查流程，若涉及广告权益、优化次数、支付或 AR 问题，请尽量补充截图，便于定位问题。</text>
+      <view class="notice-shield">✓</view>
+    </view>
+
+    <button class="submit-button" bindtap="handleSubmit" loading="{{isSubmitting}}" disabled="{{isSubmitting || !contentLength}}" hover-class="none">{{isSubmitting ? '提交中' : '提交反馈'}}</button>
+    <button class="help-button" bindtap="handleBackToHelp" hover-class="none">返回帮助页</button>
+
+    <view class="privacy-tip">
+      <text class="privacy-icon">锁</text>
+      <text>我们仅用于问题排查与体验改进</text>
+    </view>
+
+    <view class="safe-bottom"></view>
+  </view>
+</view>

@@ -1,0 +1,172 @@
+<app-page-layout
+  title="作品详情"
+  subtitle="查看作品信息，继续优化或补图"
+  show-back="{{true}}"
+>
+  <view wx:if="{{work}}" class="work-detail-page">
+    <view class="hero-grid">
+      <view class="model-card" bindtap="handlePreviewModel">
+        <image class="model-image" src="{{previewImage}}" mode="aspectFill"></image>
+        <view class="model-badge">作品预览</view>
+        <view class="model-zoom" catchtap="handleZoomPreview">⌕</view>
+        <view class="model-count">1/6</view>
+        <view class="model-footnote">当前为基础作品封面</view>
+      </view>
+
+      <view class="info-card">
+        <view class="info-header">
+          <view class="info-name-row">
+            <text class="pet-name">{{petNameText}}</text>
+            <text class="edit-icon" bindtap="handleEditName">✎</text>
+          </view>
+          <view class="ar-pill ar-pill-{{arPillTone}}">{{arLabel}}</view>
+        </view>
+
+        <view class="info-meta-list">
+          <view wx:for="{{detailMetaItems}}" wx:key="label" class="info-meta-item">
+            <view class="meta-icon">{{item.icon}}</view>
+            <view class="meta-copy">
+              <text class="meta-label">{{item.label}}</text>
+              <text class="meta-value">{{item.value}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card status-flow-card">
+      <text class="section-title">作品状态</text>
+      <view class="status-flow">
+        <view class="status-line-track"></view>
+        <view class="status-line-fill" style="width: {{statusLinePercent}}%;"></view>
+        <view wx:for="{{statusSteps}}" wx:key="key" class="status-step status-step-{{item.tone}}">
+          <view class="step-icon">{{item.icon}}</view>
+          <text class="step-title">{{item.title}}</text>
+          <text class="step-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card action-section">
+      <text class="section-title">操作</text>
+
+      <view wx:if="{{showPrimaryActions}}" class="action-grid">
+        <view class="action-card" bindtap="handleResult">
+          <view class="action-icon action-icon-result">结</view>
+          <view class="action-copy">
+            <text class="action-title">查看结果 / 继续优化</text>
+            <text class="action-desc">评估相似度，优化细节</text>
+          </view>
+          <text class="action-arrow">›</text>
+        </view>
+
+        <view class="action-card" bindtap="handleAr">
+          <view class="action-icon action-icon-ar">AR</view>
+          <view class="action-copy">
+            <text class="action-title">{{arActionTitle}}</text>
+            <text class="action-desc">{{arActionDesc}}</text>
+          </view>
+          <text class="action-arrow">›</text>
+        </view>
+
+        <view class="action-card {{shareStatus === 'loading' ? 'action-card-disabled' : ''}}" bindtap="handleShare">
+          <view class="action-icon action-icon-share">分</view>
+          <view class="action-copy">
+            <text class="action-title">{{shareStatus === 'loading' ? '正在准备分享' : '分享作品'}}</text>
+            <text class="action-desc">{{shareStatus === 'loading' ? '请稍候，不会重复创建分享记录' : '分享给家人朋友'}}</text>
+          </view>
+          <text class="action-arrow">›</text>
+        </view>
+      </view>
+
+      <view wx:if="{{showGeneratingAction}}" class="wide-action-card" bindtap="handleGenerating">
+        <view class="action-icon action-icon-progress">进</view>
+        <view class="action-copy">
+          <text class="action-title">继续查看生成进度</text>
+          <text class="action-desc">当前作品仍在生成中</text>
+        </view>
+        <text class="action-arrow">›</text>
+      </view>
+
+      <view wx:if="{{showRecoveryAction}}" class="wide-action-card wide-action-card-danger" bindtap="handleOpenRecovery">
+        <view class="action-icon action-icon-danger">!</view>
+        <view class="action-copy">
+          <text class="action-title">查看异常恢复</text>
+          <text class="action-desc">生成结果暂不可用，查看恢复建议</text>
+        </view>
+        <text class="action-arrow">›</text>
+      </view>
+
+      <view class="delete-card" bindtap="handleOpenDelete">
+        <view class="delete-icon">删</view>
+        <view class="action-copy">
+          <text class="action-title">删除作品</text>
+          <text class="action-desc">删除后不可恢复，请谨慎操作</text>
+        </view>
+        <text class="action-arrow">›</text>
+      </view>
+    </view>
+
+    <view wx:if="{{shareReady}}" class="share-ready-card">
+      <text class="section-title">分享卡片已准备好</text>
+      <text class="caption">{{shareHint}}</text>
+      <text class="meta">{{sharePayload.preview.title}}</text>
+      <button class="share-send-button" open-type="share">发送给朋友</button>
+    </view>
+
+    <view wx:elif="{{shareStatus === 'error' && shareErrorText}}" class="share-ready-card share-ready-card-error">
+      <text class="section-title">分享暂时没有准备好</text>
+      <text class="caption">{{shareErrorText}}</text>
+    </view>
+
+    <text class="rights-title">AR 功能状态</text>
+    <view class="rights-card rights-card-{{rightsTone}}">
+      <view class="rights-icon">{{rightsIcon}}</view>
+      <view class="rights-copy">
+        <text class="rights-main">{{rightsTitle}}</text>
+        <text class="rights-desc">{{rightsDesc}}</text>
+        <text class="rights-note">{{rightsNote}}</text>
+      </view>
+      <button class="rights-button" bindtap="handleRightsAction">{{rightsButtonText}}</button>
+    </view>
+
+    <view class="tips-strip">
+      <view class="strip-icon strip-icon-tips">i</view>
+      <text class="strip-text">删除后，作品及生成结果记录将无法继续查看。</text>
+    </view>
+
+    <view class="danger-strip">
+      <view class="strip-icon strip-icon-danger">!</view>
+      <text class="strip-text">删除后，作品及生成结果记录将无法继续查看。</text>
+    </view>
+
+    <view class="bottom-actions">
+      <button class="outline-bottom-button" bindtap="handleBackList">返回作品列表</button>
+      <button class="solid-bottom-button" bindtap="handleCreateNew">继续创作新作品</button>
+    </view>
+  </view>
+
+  <error-state
+    wx:else
+    title="作品已不可用"
+    description="这份作品可能已被删除，或当前数据尚未准备好。"
+    primary-text="返回作品列表"
+    bindprimary="handleBackList"
+  ></error-state>
+
+  <confirm-modal
+    visible="{{showDeleteConfirm}}"
+    title="删除作品"
+    question="确认删除这个宠物作品吗？"
+    description="删除后，该作品、生成结果记录将无法继续查看。"
+    hint="此操作无法撤回，请谨慎确认。"
+    cancel-text="取消"
+    confirm-text="确认删除"
+    variant="delete"
+    icon-text="!"
+    loading="{{deleteSubmitting}}"
+    error-text="{{deleteErrorText}}"
+    bindcancel="handleCancelDelete"
+    bindconfirm="handleConfirmDelete"
+  ></confirm-modal>
+</app-page-layout>

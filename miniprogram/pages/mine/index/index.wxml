@@ -1,0 +1,112 @@
+<view class="profile-page">
+  <view class="profile-bg profile-bg-top"></view>
+  <view class="profile-bg profile-bg-bottom"></view>
+
+  <view
+    class="profile-nav"
+    style="padding-top: {{headerTopPadding}}px; padding-right: {{headerRightWidth}}px; min-height: {{headerNavHeight}}px;"
+  >
+    <text class="profile-nav-title">我的</text>
+  </view>
+
+  <view class="profile-content">
+    <view class="user-hero" bindtap="handleProfile">
+      <view class="avatar-wrap">
+        <image class="avatar-image" src="{{avatarUrl}}" mode="aspectFill"></image>
+        <view class="avatar-badge">P</view>
+      </view>
+
+      <view class="user-main">
+        <view class="nickname-row">
+          <text class="nickname">{{nickname}}</text>
+          <text class="edit-symbol">✎</text>
+        </view>
+        <text class="login-label">{{loginLabel}}</text>
+        <view class="identity-pill">
+          <text class="identity-icon">宠</text>
+          <text class="identity-text">{{identityLabel}}</text>
+        </view>
+      </view>
+
+      <text class="hero-arrow">›</text>
+    </view>
+
+    <view class="works-summary-card" bindtap="handleWorksSummary">
+      <view class="works-top">
+        <view class="works-main">
+          <view class="works-heading">
+            <view class="works-icon">
+              <text class="works-icon-text">爪</text>
+            </view>
+            <text class="works-title">我的作品</text>
+          </view>
+
+          <view class="works-stats">
+            <view class="stat-item">
+              <text class="stat-number">{{workCount}}</text>
+              <text class="stat-label">我的宠物作品</text>
+            </view>
+            <view class="stat-divider"></view>
+            <view class="stat-item">
+              <text class="stat-number">{{arUnlockedCount}}</text>
+              <text class="stat-label">已解锁 AR 的宠物作品</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="works-decoration">
+          <image class="works-cat" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+          <view class="plant">
+            <view class="leaf leaf-a"></view>
+            <view class="leaf leaf-b"></view>
+            <view class="leaf leaf-c"></view>
+            <view class="pot"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="rights-inline-card">
+        <view class="rights-icon">
+          <text class="rights-icon-text">保</text>
+        </view>
+        <view class="rights-copy">
+          <text class="rights-title">AR 权益仅对应单个宠物作品</text>
+          <text class="rights-desc">购买后可无限次进入 AR 展示，同一作品后续优化仍继承权益。</text>
+        </view>
+        <view class="rights-info">i</view>
+      </view>
+    </view>
+
+    <view class="menu-card">
+      <view
+        wx:for="{{menuItems}}"
+        wx:key="key"
+        class="menu-row"
+        data-route="{{item.route}}"
+        bindtap="handleMenuTap"
+      >
+        <view class="menu-icon {{item.iconClass}}">
+          <text class="menu-icon-text">{{item.icon}}</text>
+        </view>
+        <view class="menu-copy">
+          <text class="menu-title">{{item.title}}</text>
+          <text class="menu-desc">{{item.desc}}</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+    </view>
+
+    <button class="logout-button" bindtap="handleOpenLogout">
+      <text class="logout-icon">↩</text>
+      <text>退出登录</text>
+    </button>
+
+    <text class="logout-tip">退出后当前设备将切换为未登录状态，已绑定账号的作品和权益将保留在账号中。</text>
+  </view>
+
+  <logout-confirm
+    visible="{{showLogoutDialog}}"
+    bindconfirm="handleLogout"
+    bindcancel="handleCloseLogout"
+  ></logout-confirm>
+</view>

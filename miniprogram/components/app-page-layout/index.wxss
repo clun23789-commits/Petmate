@@ -1,0 +1,19 @@
+@import "../../styles/layout.wxss";
+@import "../../styles/page.wxss";
+
+.app-layout {
+  min-height: 100vh;
+  background: var(--gradient-app-page);
+}
+
+.app-layout-soft {
+  background: var(--gradient-app-page);
+}
+
+.page-shell-flush {
+  padding: 0;
+}
+
+.page-shell-compact {
+  padding-top: var(--space-sm);
+}

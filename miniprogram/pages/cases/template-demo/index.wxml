@@ -1,0 +1,101 @@
+<view class="template-demo-page">
+  <top-nav title="官方示例模型体验" show-back="{{true}}" bindback="handleBack"></top-nav>
+
+  <view wx:if="{{templateReady}}" class="template-content">
+    <view class="official-notice-card">
+      <view class="notice-head">
+        <view class="notice-icon-wrap">
+          <text class="notice-icon">★</text>
+        </view>
+        <text class="notice-title">{{noticeTitle}}</text>
+      </view>
+      <text class="notice-text">{{noticeText}}</text>
+      <text class="notice-warning">{{noticeWarning}}</text>
+    </view>
+
+    <view class="model-stage-card">
+      <view class="stage-soft-glow"></view>
+      <view class="gesture-tools">
+        <button class="gesture-tool" data-type="rotate" bindtap="handleGestureHint" hover-class="none">
+          <text class="gesture-icon">↻</text>
+          <text class="gesture-text">拖动旋转</text>
+        </button>
+        <button class="gesture-tool" data-type="zoom" bindtap="handleGestureHint" hover-class="none">
+          <text class="gesture-icon">⌕</text>
+          <text class="gesture-text">双指缩放</text>
+        </button>
+      </view>
+
+      <view class="model-main-area">
+        <view class="model-stage-floor"></view>
+        <image class="model-hero-image" src="{{heroImageSrc}}" mode="aspectFit"></image>
+      </view>
+
+      <view class="preview-rail">
+        <view
+          wx:for="{{previewTabs}}"
+          wx:key="key"
+          class="preview-thumb {{activePreviewKey === item.key ? 'is-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="handlePreviewTap"
+        >
+          <image class="preview-thumb-image" src="{{item.image}}" mode="aspectFit"></image>
+          <view wx:if="{{item.type === 'video'}}" class="preview-thumb-mask">
+            <view class="preview-play-button">
+              <text class="preview-play-icon">▶</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="drag-hint">{{stageHint}}</view>
+      <view class="stage-dots">
+        <view wx:for="{{dots}}" wx:key="*this" class="stage-dot {{activeDot === index ? 'is-active' : ''}}"></view>
+      </view>
+    </view>
+
+    <view class="about-template-card">
+      <view class="section-head">
+        <view class="section-icon-wrap">
+          <text class="section-icon">✓</text>
+        </view>
+        <text class="section-title">关于官方示例模型</text>
+      </view>
+      <view class="about-grid">
+        <view wx:for="{{currentAboutItems}}" wx:key="title" class="about-item {{item.showDivider ? 'has-divider' : ''}}">
+          <text class="about-icon">{{item.icon}}</text>
+          <text class="about-title">{{item.title}}</text>
+          <text class="about-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <button class="warm-tip-card" bindtap="handleWarmTip" hover-class="none">
+      <view class="tip-icon-wrap">
+        <text class="tip-icon">i</text>
+      </view>
+      <view class="tip-copy">
+        <text class="tip-title">温馨提示</text>
+        <text class="tip-text">{{warmTipText}}</text>
+      </view>
+      <text class="tip-arrow">›</text>
+    </button>
+
+    <view class="bottom-safe-space"></view>
+  </view>
+
+  <view wx:else class="template-loading">
+    <view class="loading-card">
+      <text class="section-title">正在准备官方示例模型</text>
+      <text class="caption">马上就能进入模型展示与体验引导。</text>
+    </view>
+  </view>
+
+  <view class="bottom-action-bar">
+    <button class="secondary-bottom-button" bindtap="handleReturnCase" hover-class="none">返回案例</button>
+    <button class="primary-bottom-button" bindtap="handleStart" hover-class="none">
+      <text class="primary-main">开始创作我的宠物</text>
+      <text class="primary-sub">上传真实宠物照片，生成专属数字形象</text>
+    </button>
+  </view>
+</view>

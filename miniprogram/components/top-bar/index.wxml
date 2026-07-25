@@ -1,0 +1,7 @@
+<view class="between">
+  <view class="stack">
+    <text class="section-title">{{title}}</text>
+    <text wx:if="{{description}}" class="caption">{{description}}</text>
+  </view>
+  <text wx:if="{{badge}}" class="pill">{{badge}}</text>
+</view>

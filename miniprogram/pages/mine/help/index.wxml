@@ -1,0 +1,123 @@
+<app-page-layout
+  title="帮助中心"
+  show-back="{{true}}"
+  fallback-path="/pages/mine/index/index"
+  fallback-mode="switchTab"
+  content-class="page-shell-flush"
+  nav-size="compact"
+>
+  <view class="help-page">
+    <view class="help-glow help-glow-left"></view>
+    <view class="help-glow help-glow-right"></view>
+
+    <view class="help-content">
+    <view class="hero-card">
+      <view class="hero-copy">
+        <view class="hero-title">
+          <text>遇到问题？</text>
+          <text class="hero-title-accent">我们来帮你</text>
+        </view>
+        <text class="hero-desc">以下是常见问题，你也可以提交反馈，我们会根据问题信息继续排查。</text>
+      </view>
+
+      <view class="hero-pets" aria-hidden="true">
+        <view class="hero-plant hero-plant-left"></view>
+        <view class="hero-plant hero-plant-right"></view>
+        <image class="hero-dog" src="/assets/mock/pet-corgi-hero.png" mode="aspectFit"></image>
+        <image class="hero-cat" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+        <view class="hero-question">?</view>
+      </view>
+
+      <view class="search-box">
+        <text class="search-icon">⌕</text>
+        <input
+          class="search-input"
+          value="{{searchKeyword}}"
+          placeholder="搜索问题，如：生成失败、优化次数、AR 失效等"
+          placeholder-class="search-placeholder"
+          confirm-type="search"
+          bindinput="handleSearchInput"
+        />
+        <button wx:if="{{searchKeyword}}" class="search-clear" bindtap="handleClearSearch" hover-class="none">×</button>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="state-card">
+      <text class="state-title">正在准备帮助内容...</text>
+      <text class="state-desc">马上就能查看上传、生成、优化次数和 AR 使用说明。</text>
+    </view>
+
+    <view wx:elif="{{loadFailed}}" class="state-card">
+      <text class="state-title">帮助内容暂时没有加载成功</text>
+      <text class="state-desc">重新试一次就好，已有页面入口不会被影响。</text>
+      <button class="state-action" bindtap="handleRetry" hover-class="none">重新加载</button>
+    </view>
+
+    <block wx:else>
+      <view wx:if="{{hasSearchResult}}" class="group-list">
+        <view
+          wx:for="{{filteredGroups}}"
+          wx:key="id"
+          class="help-group-card"
+          data-article-id="{{item.articleId}}"
+          bindtap="handleGroupTap"
+        >
+          <view class="group-icon-wrap">
+            <text class="group-icon">{{item.icon}}</text>
+          </view>
+
+          <view class="group-main">
+            <text class="group-title">{{item.title}}</text>
+            <text class="group-summary">{{item.summary}}</text>
+          </view>
+
+          <view class="group-divider"></view>
+
+          <view class="question-list">
+            <view
+              wx:for="{{item.questions}}"
+              wx:key="id"
+              wx:for-item="question"
+              class="question-item"
+              data-article-id="{{question.id}}"
+              catchtap="handleQuestionTap"
+            >
+              <text class="question-dot">·</text>
+              <text class="question-text">{{question.text}}</text>
+            </view>
+          </view>
+
+          <text class="group-arrow">›</text>
+        </view>
+      </view>
+
+      <view wx:else class="empty-search-card">
+        <text class="empty-title">暂时没有找到相关问题</text>
+        <text class="empty-desc">换个关键词试试，或直接联系我们说明遇到的情况。</text>
+        <button class="empty-action" bindtap="handleSupportAction" hover-class="none">联系客服 / 提交反馈</button>
+      </view>
+
+      <view class="support-card" bindtap="handleSupportAction">
+        <view class="support-icon-wrap">
+          <text class="support-icon">☎</text>
+        </view>
+        <view class="support-copy">
+          <text class="support-title">没有找到你的问题？</text>
+          <text class="support-desc">可联系客服或提交反馈，建议带上截图与问题步骤</text>
+        </view>
+        <view class="support-action">
+          <text>联系客服 / 提交反馈</text>
+          <text class="support-arrow">›</text>
+        </view>
+      </view>
+
+      <button class="back-mine-button" bindtap="handleBackMine" hover-class="none">
+        <text class="back-mine-arrow">←</text>
+        <text>返回我的页</text>
+      </button>
+    </block>
+
+    <view class="safe-bottom"></view>
+    </view>
+  </view>
+</app-page-layout>

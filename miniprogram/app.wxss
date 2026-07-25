@@ -1,0 +1,14 @@
+@import "./styles/tokens.wxss";
+@import "./styles/layout.wxss";
+@import "./styles/page.wxss";
+
+page {
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+  min-height: 100%;
+}
+
+button {
+  border-radius: var(--radius-lg);
+}

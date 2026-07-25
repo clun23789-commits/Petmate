@@ -1,0 +1,82 @@
+{
+  "pages": [
+    "pages/works/index/index",
+    "pages/cases/index/index",
+    "pages/mine/index/index",
+    "pages/share/landing/index",
+    "pages/share/conversion/index",
+    "pages/cases/search/index",
+    "pages/cases/video-detail/index",
+    "pages/cases/detail/index",
+    "pages/cases/template-demo/index",
+    "pages/works/start-create/index",
+    "pages/works/ad-unlock/index",
+    "pages/works/upload/index",
+    "pages/works/generating/index",
+    "pages/works/result/index",
+    "pages/works/targeted-upload/index",
+    "pages/works/detail-retouch/index",
+    "pages/works/ar-guide/index",
+    "pages/works/payment/index",
+    "pages/works/ar-view/index",
+    "pages/works/ar-failure/index",
+    "pages/works/exception/index",
+    "pages/works/generated-list/index",
+    "pages/works/detail/index",
+    "pages/mine/help/index",
+    "pages/mine/contact/index",
+    "pages/mine/feedback/index",
+    "pages/mine/help-detail/index",
+    "pages/mine/profile/index",
+    "pages/mine/benefits/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "Petmate",
+    "navigationBarBackgroundColor": "#f9f2e8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f7f1e7",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "tabBar": {
+    "color": "#7d776e",
+    "selectedColor": "#5d9664",
+    "backgroundColor": "#fff9f2",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/works/index/index",
+        "text": "作品",
+        "iconPath": "assets/tabbar/works.png",
+        "selectedIconPath": "assets/tabbar/works-active.png"
+      },
+      {
+        "pagePath": "pages/cases/index/index",
+        "text": "案例",
+        "iconPath": "assets/tabbar/cases.png",
+        "selectedIconPath": "assets/tabbar/cases-active.png"
+      },
+      {
+        "pagePath": "pages/mine/index/index",
+        "text": "我的",
+        "iconPath": "assets/tabbar/mine.png",
+        "selectedIconPath": "assets/tabbar/mine-active.png"
+      }
+    ]
+  },
+  "usingComponents": {
+    "app-page-layout": "/components/app-page-layout/index",
+    "top-nav": "/components/top-nav/index",
+    "status-tag": "/components/status-tag/index",
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index",
+    "error-state": "/components/error-state/index",
+    "confirm-modal": "/components/confirm-modal/index",
+    "top-bar": "/components/top-bar/index",
+    "action-bar": "/components/action-bar/index",
+    "empty-state": "/components/empty-state/index",
+    "nickname-editor": "/components/dialogs/nickname-editor/index",
+    "logout-confirm": "/components/dialogs/logout-confirm/index"
+  }
+}

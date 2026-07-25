@@ -1,0 +1,2 @@
+@import "../../styles/layout.wxss";
+@import "../../styles/page.wxss";

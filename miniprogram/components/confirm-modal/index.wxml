@@ -1,0 +1,54 @@
+<view wx:if="{{visible}}" class="confirm-modal-mask" catchtouchmove="noop">
+  <view class="confirm-modal-card confirm-modal-card-{{variant}}" catchtap="noop">
+    <button
+      class="confirm-modal-close"
+      bindtap="handleCancel"
+      disabled="{{loading}}"
+      hover-class="button-hover"
+    >
+      ×
+    </button>
+
+    <view class="confirm-modal-header">
+      <text class="confirm-modal-title">{{title}}</text>
+    </view>
+
+    <view class="confirm-modal-body">
+      <view class="confirm-modal-icon confirm-modal-icon-{{variant}}">
+        <text class="confirm-modal-icon-text">{{iconText}}</text>
+      </view>
+
+      <view class="confirm-modal-copy">
+        <text class="confirm-modal-question">{{question ? question : title}}</text>
+        <text class="confirm-modal-description">{{description}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{hint}}" class="confirm-modal-hint">
+      <text class="confirm-modal-hint-icon">!</text>
+      <text class="confirm-modal-hint-text">{{hint}}</text>
+    </view>
+
+    <text wx:if="{{errorText}}" class="confirm-modal-error">{{errorText}}</text>
+
+    <view class="confirm-modal-actions">
+      <button
+        class="confirm-modal-cancel"
+        bindtap="handleCancel"
+        disabled="{{loading}}"
+        hover-class="button-hover"
+      >
+        {{cancelText}}
+      </button>
+      <button
+        class="confirm-modal-confirm"
+        bindtap="handleConfirm"
+        loading="{{loading}}"
+        disabled="{{loading}}"
+        hover-class="button-hover"
+      >
+        {{loading ? confirmLoadingText : confirmText}}
+      </button>
+    </view>
+  </view>
+</view>

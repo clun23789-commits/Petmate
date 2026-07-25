@@ -1,0 +1,117 @@
+<app-page-layout title="广告解锁说明" show-back="{{true}}">
+  <view class="unlock-page">
+    <view class="hero-card" bindlongpress="handleLongPressHint">
+      <view class="hero-copy">
+        <view class="source-chip is-active">
+          <text class="source-chip-icon">盾</text>
+          <text>{{sourceLabel}}</text>
+        </view>
+        <text class="hero-title">观看广告，继续宠物创作</text>
+        <text class="hero-desc">{{heroDesc}}</text>
+      </view>
+
+      <view class="hero-pets">
+        <view class="hero-glow"></view>
+        <image class="hero-pet hero-pet-main" src="/assets/mock/pet-corgi-hero.png" mode="aspectFit"></image>
+        <image class="hero-pet hero-pet-sub" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="recovery-summary-card unlock-summary-card">
+      <view class="recovery-section-head">
+        <text class="recovery-section-title">本次广告换什么</text>
+        <text class="recovery-section-caption">完成观看后，系统会发放当前试用所需的创作权益。</text>
+      </view>
+      <view class="summary-grid">
+        <view wx:for="{{unlockSummaryItems}}" wx:key="key" class="summary-item summary-item-{{item.tone}}">
+          <text class="summary-label">{{item.label}}</text>
+          <text class="summary-value">{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="recovery-action-card ad-action-card">
+      <view class="ad-action-copy">
+        <text class="ad-action-title">{{adActionCopy.title}}</text>
+        <text class="ad-action-desc">{{adActionCopy.subtitle}}</text>
+        <text class="ad-action-hint">{{adMessage}}</text>
+      </view>
+
+      <primary-button
+        text="{{isUnlocking ? '正在确认权益…' : adActionCopy.title}}"
+        subtext="{{adActionCopy.subtitle}}"
+        disabled="{{isUnlocking}}"
+        loading="{{isUnlocking}}"
+        bindpress="handleUnlock"
+      ></primary-button>
+      <text class="ad-cancel" bindtap="handleCancel">暂不观看，返回上一页</text>
+    </view>
+
+    <view class="boundary-card">
+      <view class="boundary-icon">AR</view>
+      <view class="boundary-copy">
+        <text class="boundary-title">广告试用不包含 AR 展示权益</text>
+        <text class="boundary-desc">满意结果后，可为当前宠物作品单独解锁 AR 展示权益；广告未完整观看完成，不会发放本次试用权益。</text>
+      </view>
+    </view>
+
+    <view class="recovery-tip" bindtap="handleRecoveryHint">
+      <view class="recovery-icon">盾</view>
+      <view class="recovery-copy">
+        <text class="recovery-title">权益未到账？</text>
+        <text class="recovery-desc">进入异常恢复页重新查询，系统会确认是否已经发放。</text>
+      </view>
+      <text class="recovery-arrow">›</text>
+    </view>
+
+    <view class="source-card">
+      <text class="source-title">本次解锁来源</text>
+      <view class="source-chip-row">
+        <view wx:for="{{sourceItems}}" wx:key="key" wx:for-item="item" class="source-chip {{item.active ? 'is-active' : ''}}">
+          <text class="source-chip-icon">{{item.icon}}</text>
+          <text>{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="benefit-card">
+      <text class="section-title benefit-section-title">详细试用权益</text>
+      <view class="benefit-grid">
+        <view wx:for="{{benefitItems}}" wx:key="title" wx:for-item="item" class="benefit-item {{item.hasDivider ? 'has-divider' : ''}}">
+          <view class="benefit-icon">
+            <text>{{item.icon}}</text>
+          </view>
+          <text class="benefit-title">{{item.title}}</text>
+          <text class="benefit-desc">{{item.desc}}</text>
+        </view>
+      </view>
+      <view class="benefit-note" bindtap="handleViewRetention">
+        <text class="benefit-note-icon">i</text>
+        <text class="benefit-note-text">照片仅用于生成你的宠物数字形象，默认按规则保留，用于结果查看和再次优化。</text>
+      </view>
+    </view>
+
+    <view class="rule-card">
+      <text class="section-title rule-section-title">详细规则</text>
+      <view class="rule-list">
+        <view
+          wx:for="{{ruleItems}}"
+          wx:key="key"
+          wx:for-item="item"
+          class="rule-item {{item.isLast ? 'is-last' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="handleRuleTap"
+        >
+          <view class="rule-icon">
+            <text>{{item.icon}}</text>
+          </view>
+          <view class="rule-copy">
+            <text class="rule-title">{{item.title}}</text>
+            <text class="rule-desc">{{item.desc}}</text>
+          </view>
+          <text class="rule-arrow">›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</app-page-layout>

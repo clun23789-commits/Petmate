@@ -1,0 +1,86 @@
+<view class="case-gallery-page">
+  <top-nav title="案例" show-back="{{false}}" show-capsule="{{true}}"></top-nav>
+
+  <view class="case-gallery-content">
+    <view class="search-entry" bindtap="handleSearch">
+      <text class="search-icon">⌕</text>
+      <text class="search-placeholder">搜索猫咪、狗狗、AR 展示</text>
+    </view>
+
+    <scroll-view scroll-x class="filter-scroll" show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          wx:for="{{filters}}"
+          wx:key="key"
+          class="filter-chip {{selectedFilter === item.key ? 'is-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="handleFilter"
+        >
+          <text>{{item.label}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="sample-hero">
+      <view class="sample-copy">
+        <text class="sample-title">先体验官方示例模型</text>
+        <text class="sample-desc">免费查看模型形态与基础互动，不代表真实宠物生成结果。</text>
+        <view class="sample-actions">
+          <button class="sample-primary" bindtap="handleTemplate">体验示例模型</button>
+          <button class="sample-secondary" bindtap="handleStart">生成我的宠物</button>
+        </view>
+      </view>
+
+      <view class="sample-pets">
+        <image class="sample-dog" src="/assets/mock/pet-corgi-hero.png" mode="aspectFit"></image>
+        <image class="sample-cat" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view wx:if="{{loadFailed}}" class="status-card status-card-error">
+      <text class="status-title">案例画廊暂时没有加载成功</text>
+      <text class="status-desc">你可以重新试试，现有跳转和 tabbar 都会保持不变。</text>
+      <view class="status-action" bindtap="handleRetry">重新加载</view>
+    </view>
+
+    <view wx:elif="{{displayCases.length}}" class="case-grid">
+      <view
+        wx:for="{{displayCases}}"
+        wx:key="id"
+        class="case-card"
+        data-case-id="{{item.id}}"
+        bindtap="handleCase"
+      >
+        <view class="case-cover {{item.coverClass}}">
+          <image class="case-main-image {{item.imageClass}}" src="{{item.image}}" mode="aspectFill"></image>
+
+          <view wx:if="{{item.videoId}}" class="case-thumb-wrap is-video" data-video-id="{{item.videoId}}" catchtap="handleVideo">
+            <image class="case-thumb {{item.thumbClass}}" src="{{item.originalImage}}" mode="aspectFill"></image>
+            <view class="thumb-badge">AR 预览</view>
+          </view>
+
+          <view wx:else class="case-thumb-wrap">
+            <image class="case-thumb {{item.thumbClass}}" src="{{item.originalImage}}" mode="aspectFill"></image>
+          </view>
+        </view>
+
+        <view class="case-info-row">
+          <view class="case-type">
+            <text class="case-icon">{{item.petIcon}}</text>
+            <text>{{item.petTypeLabel}}</text>
+          </view>
+
+          <view class="case-tags">
+            <text wx:for="{{item.displayTags}}" wx:key="*this" wx:for-item="tag" class="case-tag">{{tag}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="status-card status-card-empty">
+      <text class="status-title">这类案例还没有排到前面</text>
+      <text class="status-desc">先看看推荐案例，继续感受毛色、花纹和 AR 展示的整体效果。</text>
+      <view class="status-action" bindtap="handleResetFilters">查看推荐案例</view>
+    </view>
+  </view>
+</view>

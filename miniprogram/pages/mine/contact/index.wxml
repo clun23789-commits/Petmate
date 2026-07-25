@@ -1,0 +1,93 @@
+<view class="contact-page">
+  <top-nav title="联系我们" show-back="{{true}}" show-capsule="{{true}}" bindback="handleBack"></top-nav>
+
+  <view class="contact-scroll">
+    <view class="contact-content">
+      <view class="hero-card">
+        <view class="hero-copy">
+          <view class="hero-kicker">
+            <text class="hero-dot"></text>
+            <text>官方联系渠道</text>
+          </view>
+          <text class="hero-title">我们很愿意听见你的问题</text>
+          <text class="hero-desc">如需使用咨询、合作沟通或其他帮助，可通过以下方式联系我们。</text>
+        </view>
+
+        <view class="hero-pet-wrap">
+          <image class="hero-pet" src="/assets/mock/pet-cat-hero.png" mode="aspectFit"></image>
+          <view class="hero-badge">
+            <text class="badge-mark">✓</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section-head">
+        <text class="section-title">联系方式</text>
+        <text class="section-subtitle">选择需要的渠道，一键复制后即可联系</text>
+      </view>
+
+      <view class="contact-list">
+        <view
+          wx:for="{{contacts}}"
+          wx:key="id"
+          class="contact-card contact-card-{{item.tone}}"
+        >
+          <view class="contact-main">
+            <view class="contact-icon contact-icon-{{item.tone}}">
+              <text>{{item.icon}}</text>
+            </view>
+            <view class="contact-text">
+              <text class="contact-title">{{item.title}}</text>
+              <text class="contact-value">{{item.value}}</text>
+              <text class="contact-desc">{{item.desc}}</text>
+            </view>
+          </view>
+          <button
+            class="copy-button copy-button-{{item.tone}}"
+            data-id="{{item.id}}"
+            bindtap="handleCopyContact"
+            hover-class="button-hover"
+          >
+            {{item.buttonText}}
+          </button>
+        </view>
+      </view>
+
+      <view class="service-panel">
+        <view
+          wx:for="{{serviceNotes}}"
+          wx:key="id"
+          class="service-item"
+        >
+          <view class="service-icon">{{item.icon}}</view>
+          <view class="service-copy">
+            <text class="service-title">{{item.title}}</text>
+            <text class="service-value">{{item.value}}</text>
+            <text class="service-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="tips-card">
+        <view class="tips-icon">i</view>
+        <view class="tips-copy">
+          <text class="tips-title">温馨提示</text>
+          <text class="tips-desc">如为广告权益、上传失败、生成失败、AR 使用等问题，建议尽量附上页面截图与问题描述，以便更快定位。</text>
+        </view>
+      </view>
+
+      <view class="bottom-actions">
+        <button class="primary-action" bindtap="handleReturnHelp" hover-class="button-hover">
+          <text class="action-icon">←</text>
+          <text>返回帮助页</text>
+        </button>
+        <button class="secondary-action" bindtap="handleCopyAll" hover-class="button-hover">
+          <text class="action-icon">⧉</text>
+          <text>复制全部联系方式</text>
+        </button>
+      </view>
+
+      <view class="safe-bottom"></view>
+    </view>
+  </view>
+</view>

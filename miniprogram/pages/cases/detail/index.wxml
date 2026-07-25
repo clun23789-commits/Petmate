@@ -1,0 +1,134 @@
+<view class="case-detail-page">
+  <top-nav title="案例详情" show-back="{{true}}" bindback="handleBack"></top-nav>
+
+  <view wx:if="{{loading}}" class="case-detail-loading">
+    <view class="loading-card">
+      <text class="section-title">正在准备案例内容</text>
+      <text class="caption">马上就能看到官方模型细节、展示角度与体验入口。</text>
+    </view>
+  </view>
+
+  <view wx:elif="{{item}}" class="case-detail-content">
+    <view class="hero-card">
+      <view class="hero-main">
+        <view class="hero-copy">
+          <text class="case-name">{{item.displayName}}</text>
+
+          <view class="case-tags">
+            <view wx:for="{{item.caseTags}}" wx:key="key" class="case-tag">
+              <view wx:if="{{item.accent}}" class="case-tag-mark"></view>
+              <text class="case-tag-label">{{item.label}}</text>
+            </view>
+          </view>
+
+          <text class="case-description">{{item.displayDescription}}</text>
+
+          <view class="ability-row">
+            <view class="ability-item">
+              <view class="ability-icon ability-icon-cube"></view>
+              <text class="ability-text">3D 模型</text>
+            </view>
+            <view class="ability-divider"></view>
+            <view class="ability-item">
+              <view class="ability-icon ability-icon-ar">
+                <text class="ability-icon-ar-text">AR</text>
+              </view>
+              <text class="ability-text">AR 展示</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="hero-visual">
+          <view class="hero-glow hero-glow-left"></view>
+          <view class="hero-glow hero-glow-right"></view>
+          <view class="hero-stand"></view>
+          <image class="hero-image" src="{{activePreview.image || item.heroImage || item.image}}" mode="aspectFit"></image>
+        </view>
+      </view>
+
+      <scroll-view scroll-x class="preview-scroll" show-scrollbar="{{false}}">
+        <view class="preview-list">
+          <view
+            wx:for="{{previewTabs}}"
+            wx:key="key"
+            class="preview-item {{activePreviewKey === item.key ? 'is-active' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="handleSelectPreview"
+          >
+            <view class="preview-image-wrap">
+              <image class="preview-image" src="{{item.image}}" mode="aspectFill"></image>
+              <view wx:if="{{item.type === 'video'}}" class="preview-play-mask">
+                <view class="preview-play-button">
+                  <text class="preview-play-icon">▶</text>
+                </view>
+              </view>
+            </view>
+            <text class="preview-label">{{item.label}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="official-card">
+      <view class="official-icon-wrap">
+        <text class="official-icon-text">P</text>
+      </view>
+      <view class="official-copy">
+        <text class="official-title">{{item.officialTitle}}</text>
+        <text class="official-desc">{{item.officialDescription}}</text>
+      </view>
+      <button class="official-btn" bindtap="handleTemplate" hover-class="none">体验官方示例模型</button>
+    </view>
+
+    <view class="highlight-card">
+      <text class="section-title highlight-section-title">模型亮点</text>
+      <view class="highlight-list">
+        <view wx:for="{{item.highlightCards}}" wx:key="key" class="highlight-item">
+          <view class="highlight-icon-wrap">
+            <text class="highlight-icon-text">{{item.icon}}</text>
+          </view>
+          <text class="highlight-title">{{item.title}}</text>
+          <text class="highlight-desc">{{item.description}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="create-card">
+      <view class="create-pet-wrap">
+        <image class="create-pet" src="{{item.createImage}}" mode="aspectFit"></image>
+      </view>
+      <view class="create-copy">
+        <text class="create-title">想生成自家宠物的专属模型？</text>
+        <text class="create-desc">观看广告解锁上传权限，开始生成属于你的宠物形象</text>
+      </view>
+      <button class="create-btn" bindtap="handleStart" hover-class="none">
+        <text>生成我的宠物</text>
+      </button>
+    </view>
+
+    <view class="bottom-action-card">
+      <button class="bottom-action" bindtap="handleTemplate" hover-class="none">
+        <view class="bottom-action-inner">
+          <text class="bottom-action-icon">示</text>
+          <text class="bottom-action-label">体验示例模型</text>
+        </view>
+      </button>
+      <view class="bottom-divider"></view>
+      <button class="bottom-action" open-type="share" hover-class="none">
+        <view class="bottom-action-inner">
+          <text class="bottom-action-icon">↗</text>
+          <text class="bottom-action-label">分享给朋友</text>
+        </view>
+      </button>
+    </view>
+  </view>
+
+  <view wx:else class="case-error-wrap">
+    <error-state
+      title="案例暂时不可用"
+      description="这个官方案例可能已下线或链接已失效"
+      primary-text="返回案例页"
+      bindprimary="handleGoCases"
+    ></error-state>
+  </view>
+</view>

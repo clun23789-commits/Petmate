@@ -1,0 +1,76 @@
+{
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "pages/works/start-create/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/ad-unlock/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/upload/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/generating/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/result/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/targeted-upload/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/detail-retouch/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/ar-guide/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/payment/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/ar-view/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/ar-failure/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/exception/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/generated-list/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/works/detail/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/mine/profile/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/mine/feedback/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/mine/contact/index"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/mine/benefits/index"
+    }
+  ]
+}

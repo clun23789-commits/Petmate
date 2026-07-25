@@ -1,0 +1,21 @@
+<view wx:if="{{visible}}" class="logout-dialog-mask" catchtouchmove="noop">
+  <view class="logout-dialog-card" catchtap="noop">
+    <button class="dialog-close" bindtap="handleCancel" hover-class="button-hover">×</button>
+
+    <view class="dialog-header">
+      <text class="dialog-title">退出登录</text>
+      <text class="dialog-question">确认退出当前登录状态吗？</text>
+      <text class="dialog-desc">退出后你仍可重新登录查看作品与权益记录。</text>
+    </view>
+
+    <view class="logout-hint">
+      <text class="hint-icon">!</text>
+      <text class="hint-text">退出不会删除已生成的宠物作品，但当前会话将结束。</text>
+    </view>
+
+    <view class="dialog-actions">
+      <button class="confirm-button" bindtap="handleConfirm" hover-class="button-hover">确认退出</button>
+      <button class="cancel-button" bindtap="handleCancel" hover-class="button-hover">取消</button>
+    </view>
+  </view>
+</view>

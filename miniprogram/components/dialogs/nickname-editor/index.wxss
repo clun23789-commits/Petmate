@@ -1,0 +1,191 @@
+@import "../../../styles/tokens.wxss";
+@import "../../../styles/layout.wxss";
+@import "../../../styles/page.wxss";
+
+.nickname-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-index-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 40rpx;
+  background: var(--color-bg-overlay);
+}
+
+.nickname-dialog {
+  width: 520rpx;
+  max-width: calc(100vw - 96rpx);
+  box-sizing: border-box;
+  padding: 34rpx 32rpx 30rpx;
+  border-radius: var(--radius-xxl);
+  background: var(--color-bg-card-strong);
+  box-shadow: var(--shadow-modal);
+}
+
+.dialog-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56rpx;
+  margin-bottom: 26rpx;
+}
+
+.dialog-title {
+  color: var(--color-text-primary);
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.close-button {
+  position: absolute;
+  right: -8rpx;
+  top: -8rpx;
+  width: 56rpx;
+  height: 56rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-tertiary);
+  background: transparent;
+  font-size: 44rpx;
+  font-weight: 300;
+  line-height: 52rpx;
+}
+
+.close-button::after,
+.clear-button::after,
+.save-button::after,
+.cancel-button::after {
+  border: 0;
+}
+
+.current-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  min-height: 66rpx;
+  box-sizing: border-box;
+  margin-bottom: 22rpx;
+  padding: 0 22rpx;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-muted);
+}
+
+.field-label {
+  flex-shrink: 0;
+  color: var(--color-text-primary);
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.current-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.input-shell {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  min-height: 72rpx;
+  box-sizing: border-box;
+  padding: 0 12rpx 0 20rpx;
+  border: 2rpx solid var(--color-border-success);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card-strong);
+}
+
+.nickname-input {
+  flex: 1;
+  min-width: 0;
+  height: 70rpx;
+  color: var(--color-text-primary);
+  font-size: 25rpx;
+  line-height: 70rpx;
+}
+
+.input-placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.clear-button {
+  flex-shrink: 0;
+  width: 34rpx;
+  height: 34rpx;
+  margin: 0 0 0 10rpx;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-inverse);
+  background: var(--color-text-placeholder);
+  font-size: 26rpx;
+  line-height: 30rpx;
+  text-align: center;
+}
+
+.rule-text {
+  display: block;
+  margin: 2rpx 0 30rpx 92rpx;
+  color: var(--color-text-tertiary);
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.save-button {
+  width: 100%;
+  height: 84rpx;
+  margin: 0 0 18rpx;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-inverse);
+  background: var(--gradient-brand-button);
+  box-shadow: var(--shadow-button);
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 84rpx;
+}
+
+.cancel-button {
+  width: 100%;
+  height: 80rpx;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 1rpx solid var(--color-border-brand);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-brand);
+  background: var(--color-bg-card-strong);
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 78rpx;
+}
+
+.button-hover {
+  opacity: 0.84;
+}

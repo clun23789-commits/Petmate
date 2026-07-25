@@ -1,0 +1,137 @@
+@import "../../styles/layout.wxss";
+@import "../../styles/page.wxss";
+
+.button-outer {
+  min-height: var(--height-button-large);
+  padding: 0 var(--space-page-x);
+  border: 1rpx solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-card-strong);
+  box-sizing: border-box;
+  line-height: 1.35;
+  box-shadow: none;
+}
+
+.button-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.button-text {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.button-subtext {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+}
+
+.button-size-large {
+  min-height: var(--height-button-large);
+}
+
+.button-size-medium {
+  min-height: var(--height-button-medium);
+}
+
+.button-size-medium .button-text {
+  font-size: var(--font-size-lg);
+}
+
+.button-size-small {
+  min-height: var(--height-button-small);
+  padding: 0 var(--space-md);
+}
+
+.button-size-small .button-text {
+  font-size: var(--font-size-sm);
+}
+
+.button-size-small .button-subtext {
+  display: none;
+}
+
+.button-variant-outline {
+  background: var(--color-bg-card-strong);
+}
+
+.button-variant-soft {
+  border-color: var(--color-border-light);
+  background: var(--color-bg-card-soft);
+}
+
+.button-variant-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.button-variant-text {
+  min-height: auto;
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+}
+
+.button-tone-neutral .button-text {
+  color: var(--color-text-primary);
+}
+
+.button-tone-neutral .button-subtext {
+  color: var(--color-text-secondary);
+}
+
+.button-tone-brand {
+  border-color: var(--color-border-brand);
+}
+
+.button-tone-brand .button-text,
+.button-tone-brand .button-subtext {
+  color: var(--color-text-brand);
+}
+
+.button-tone-success {
+  border-color: var(--color-border-success);
+}
+
+.button-tone-success .button-text,
+.button-tone-success .button-subtext {
+  color: var(--color-text-success);
+}
+
+.button-tone-danger {
+  border-color: var(--color-border-danger);
+}
+
+.button-tone-danger .button-text,
+.button-tone-danger .button-subtext {
+  color: var(--color-text-danger);
+}
+
+.is-block {
+  width: 100%;
+}
+
+.is-inline {
+  width: auto;
+  min-width: 176rpx;
+}
+
+.is-disabled {
+  opacity: 0.45;
+}
+
+.is-loading {
+  opacity: 0.72;
+}
+
+.button-hover {
+  opacity: 0.88;
+}

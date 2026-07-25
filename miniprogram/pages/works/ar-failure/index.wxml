@@ -1,0 +1,150 @@
+<app-page-layout
+  title="AR 功能说明"
+  subtitle="当前功能暂未开放"
+  show-back="{{true}}"
+  auto-back="{{false}}"
+  bindback="handleBackResult"
+>
+  <view wx:if="{{workAvailable}}" class="stack ar-failure-page">
+    <view class="failure-card failure-hero-card">
+      <view class="hero-left">
+        <view class="failure-title-row">
+          <view class="warning-badge">
+            <text class="warning-badge-text">i</text>
+          </view>
+          <view class="failure-copy">
+            <text class="failure-title">{{reasonTitle}}</text>
+            <text class="failure-desc">{{reasonDescription}}</text>
+          </view>
+        </view>
+
+        <view class="work-mini-card">
+          <image class="work-thumb" src="{{workCover}}" mode="aspectFill"></image>
+          <view class="work-copy">
+            <text class="work-label">当前宠物作品</text>
+            <text class="work-name">{{workDisplayName}}</text>
+            <text class="work-date">创建时间：{{workCreatedText}}</text>
+          </view>
+          <view class="work-state-pill">基础结果</view>
+        </view>
+      </view>
+
+      <view class="hero-visual">
+        <view class="hero-glow"></view>
+        <view class="failure-close-badge">
+          <text class="failure-close-text">AR</text>
+        </view>
+        <image class="hero-pet" src="{{workCover}}" mode="aspectFit"></image>
+        <view class="hero-plane">
+          <view class="hero-plane-line hero-plane-line-left"></view>
+          <view class="hero-plane-line hero-plane-line-right"></view>
+          <view class="hero-plane-base"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="failure-card solution-section">
+      <view class="section-head">
+        <text class="section-title">当前建议</text>
+        <text class="section-caption">当前可先查看基础作品结果，并继续反馈或补图优化。</text>
+      </view>
+      <view class="solution-list">
+        <view
+          wx:for="{{solutionItems}}"
+          wx:key="key"
+          class="solution-item {{reasonType === item.key ? 'is-active' : ''}}"
+        >
+          <view class="solution-icon">{{item.icon}}</view>
+          <view class="solution-copy">
+            <text class="solution-title">{{item.title}}</text>
+            <text class="solution-desc">{{item.desc}}</text>
+          </view>
+          <button
+            class="solution-action"
+            data-action="{{item.actionKey}}"
+            bindtap="handleSolutionAction"
+          >
+            {{item.actionText}}
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="failure-card protection-card">
+      <view class="protection-copy">
+        <view class="protection-title-row">
+          <view class="protection-badge">
+            <text class="protection-badge-text">OK</text>
+          </view>
+          <view class="protection-head">
+            <text class="section-title">基础作品流程不受影响</text>
+            <text class="section-caption">AR 暂未开放不会影响结果查看、反馈、补图优化或细节补色。</text>
+          </view>
+        </view>
+
+        <view class="protection-list">
+          <view wx:for="{{protectionItems}}" wx:key="title" class="protection-item">
+            <view class="protection-dot"></view>
+            <view class="protection-item-copy">
+              <text class="protection-item-title">{{item.title}}</text>
+              <text class="protection-item-desc">{{item.desc}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="protection-visual">
+        <view class="protection-shield">
+          <text class="protection-shield-text">OK</text>
+        </view>
+        <image class="protection-pet" src="{{workCover}}" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="failure-card reason-section">
+      <view class="section-head">
+        <text class="section-title">后续开放前的说明</text>
+        <text class="section-caption">以下内容用于说明未来开放时可能需要注意的条件。</text>
+      </view>
+      <view class="reason-grid">
+        <view
+          wx:for="{{reasonItems}}"
+          wx:key="key"
+          class="reason-item {{reasonType === item.key ? 'is-active' : ''}}"
+        >
+          <view class="reason-item-top">
+            <view class="reason-icon">{{item.icon}}</view>
+            <view wx:if="{{reasonType === item.key}}" class="reason-mark">当前</view>
+          </view>
+          <text class="reason-item-title">{{item.title}}</text>
+          <text class="reason-item-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{workAvailable}}" class="bottom-action-wrap">
+    <view class="bottom-action-bar">
+      <button class="bottom-secondary-button" bindtap="handleBackResult">
+        <text class="bottom-button-title">{{retryActionCopy.secondaryText}}</text>
+        <text class="bottom-button-subtitle">{{retryActionCopy.secondarySubtext}}</text>
+      </button>
+      <button class="bottom-primary-button" bindtap="handleRetry">
+        <text class="bottom-button-title">{{retryActionCopy.primaryText}}</text>
+        <text class="bottom-button-subtitle">{{retryActionCopy.primarySubtext}}</text>
+      </button>
+    </view>
+    <view class="contact-row">
+      <text class="contact-copy">如仍需帮助，可联系客服获取说明</text>
+      <button class="contact-link" bindtap="handleContactSupport">联系客服 ></button>
+    </view>
+  </view>
+
+  <error-state
+    wx:else
+    title="无法查看 AR 功能说明"
+    description="当前作品数据不可用，可能已被删除或尚未加载完成。"
+    primary-text="返回作品页"
+    bindprimary="handleGoWorks"
+  ></error-state>
+</app-page-layout>

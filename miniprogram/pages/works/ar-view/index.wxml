@@ -1,0 +1,234 @@
+<view wx:if="{{workAvailable}}" class="ar-page {{activeToolKey === 'filter' ? 'ar-page--filter' : ''}} {{activeToolKey === 'lighting' ? 'ar-page--lighting' : ''}}">
+  <view class="scene-background">
+    <view class="camera-blur-layer"></view>
+    <view class="room-window"></view>
+    <view class="sun-light"></view>
+    <view class="room-wall"></view>
+    <view class="room-frame"></view>
+    <view class="room-sofa"></view>
+    <view class="room-plant"></view>
+    <view class="room-table"></view>
+    <view class="room-floor"></view>
+    <view class="room-carpet"></view>
+    <view wx:if="{{activeToolKey === 'filter'}}" class="scene-filter-warm"></view>
+    <view wx:if="{{activeToolKey === 'lighting'}}" class="scene-light-boost"></view>
+    <view class="camera-vignette"></view>
+  </view>
+
+  <view class="ar-nav" style="{{navWrapStyle}}">
+    <view class="nav-main" style="{{navMainStyle}}">
+      <view class="nav-side" style="{{sideStyle}}">
+        <button class="nav-back" bindtap="handleExit">
+          <text class="nav-back-icon">&lt;</text>
+        </button>
+      </view>
+
+      <view class="nav-copy">
+        <text class="nav-title">AR 展示</text>
+        <text class="nav-subtitle">将当前宠物作品放进真实空间</text>
+        <view class="nav-stage-badge nav-stage-badge--{{stage}}">{{navStageText}}</view>
+      </view>
+
+      <view class="nav-side" style="{{sideStyle}}"></view>
+    </view>
+  </view>
+
+  <view class="plane-card {{stage === 'placed' ? 'plane-card--success' : stage === 'searching' ? 'plane-card--searching' : ''}}">
+    <text class="plane-title">平面识别</text>
+
+    <view class="plane-map">
+      <view class="plane-map-grid"></view>
+      <view class="plane-map-shape"></view>
+      <view class="plane-map-corner plane-map-corner-a"></view>
+      <view class="plane-map-corner plane-map-corner-b"></view>
+      <view class="plane-map-corner plane-map-corner-c"></view>
+      <view class="plane-map-corner plane-map-corner-d"></view>
+    </view>
+
+    <view class="plane-result">
+      <view class="plane-result-dot {{stage === 'placed' ? 'is-success' : stage === 'searching' ? 'is-searching' : ''}}"></view>
+      <text class="plane-result-text">{{planeResultText}}</text>
+    </view>
+
+    <text class="plane-status">{{planeStatusText}}</text>
+  </view>
+
+  <view class="pet-stage {{stage === 'placed' ? 'pet-stage--placed' : ''}}">
+    <view class="pet-ground"></view>
+    <view wx:if="{{activeToolKey === 'grid' && stage === 'placed'}}" class="pet-grid"></view>
+    <view class="pet-shadow" style="{{petShadowStyle}}"></view>
+    <image class="pet-model" style="{{petModelStyle}}" src="{{petPreviewImage}}" mode="aspectFit"></image>
+  </view>
+
+  <view wx:if="{{stage !== 'placed'}}" class="stage-guide">
+    <text class="stage-guide-text">{{stageHint}}</text>
+  </view>
+
+  <view wx:if="{{stage === 'placed' && operationHintVisible}}" class="operation-hint">
+    <view class="operation-hint-copy">
+      <text class="operation-hint-text">拖动宠物调整位置</text>
+      <text class="operation-hint-text">双指缩放，也可以旋转角度</text>
+    </view>
+    <view class="operation-hint-close" bindtap="handleCloseOperationHint">×</view>
+  </view>
+
+  <view wx:if="{{captureReady}}" class="capture-toast-card">
+    <view class="capture-toast-head">
+      <view class="capture-toast-icon">截</view>
+      <view class="capture-toast-copy">
+        <text class="capture-toast-title">截图预览已生成</text>
+        <text class="capture-toast-subtitle">{{captureTitle}}</text>
+      </view>
+      <view class="capture-toast-close" data-kind="capture" bindtap="handleCloseToast">×</view>
+    </view>
+    <text class="capture-toast-note">{{captureNote}}</text>
+  </view>
+
+  <view wx:if="{{shareReady}}" class="capture-toast-card capture-toast-card--share">
+    <view class="capture-toast-head">
+      <view class="capture-toast-icon capture-toast-icon--share">享</view>
+      <view class="capture-toast-copy">
+        <text class="capture-toast-title">分享卡片已准备好</text>
+        <text class="capture-toast-subtitle">{{shareHint}}</text>
+      </view>
+      <view class="capture-toast-close" data-kind="share" bindtap="handleCloseToast">×</view>
+    </view>
+    <text class="capture-toast-note">{{sharePayload ? sharePayload.preview.title : ''}}</text>
+    <button class="toast-share-button" open-type="share">发送给朋友</button>
+  </view>
+
+  <view wx:elif="{{shareStatus === 'error' && shareErrorText}}" class="capture-toast-card capture-toast-card--share capture-toast-card--error">
+    <view class="capture-toast-head">
+      <view class="capture-toast-icon capture-toast-icon--share">!</view>
+      <view class="capture-toast-copy">
+        <text class="capture-toast-title">分享暂时没有准备好</text>
+        <text class="capture-toast-subtitle">{{shareErrorText}}</text>
+      </view>
+      <view class="capture-toast-close" data-kind="share" bindtap="handleCloseToast">×</view>
+    </view>
+  </view>
+
+  <view wx:if="{{showToolPanel}}" class="tool-panel-mask" catchtap="closeToolPanel"></view>
+  <view wx:if="{{showToolPanel}}" class="tool-panel">
+    <view class="tool-panel-card">
+      <view class="tool-panel-head">
+        <view class="pet-pill pet-pill--panel">
+          <image class="pet-pill-image" src="{{petPreviewImage}}" mode="aspectFill"></image>
+          <text class="pet-pill-name">{{petNameText}}</text>
+        </view>
+        <view class="tool-panel-close" bindtap="closeToolPanel">×</view>
+      </view>
+
+      <view class="tool-section">
+        <view class="tool-section-head">
+          <text class="tool-section-title">工具</text>
+          <text class="tool-section-note">按需打开，首屏保持清爽</text>
+        </view>
+        <view class="tool-grid">
+          <view wx:for="{{sideTools}}" wx:key="key" class="tool-grid-action {{item.active ? 'is-active' : ''}}" data-tool="{{item.key}}" bindtap="handleSideTool">
+            <view class="tool-grid-icon">{{item.icon}}</view>
+            <text class="tool-grid-label">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="tool-section tool-section--inline">
+        <view class="mini-control" bindtap="handleUndo">
+          <text class="mini-control-icon">撤</text>
+          <text class="mini-control-label">撤销</text>
+        </view>
+        <view class="mini-control" bindtap="handleRecheck">
+          <text class="mini-control-icon">重</text>
+          <text class="mini-control-label">重置识别</text>
+        </view>
+      </view>
+
+      <view class="tool-section">
+        <text class="tool-section-title">摆放方式</text>
+        <view class="placement-mode placement-mode--panel">
+          <view class="placement-mode-option {{placementMode === 'place' ? 'is-active' : ''}}" data-mode="place" bindtap="handlePlacementMode">
+            <text class="placement-mode-icon">摆</text>
+            <text class="placement-mode-label">摆放</text>
+          </view>
+          <view class="placement-mode-option {{placementMode === 'follow' ? 'is-active' : ''}}" data-mode="follow" bindtap="handlePlacementMode">
+            <text class="placement-mode-icon">跟</text>
+            <text class="placement-mode-label">跟随</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="tool-section">
+        <view class="tool-section-head">
+          <text class="tool-section-title">宠物动作</text>
+          <text class="tool-section-note">选择后可继续拖动调整</text>
+        </view>
+        <scroll-view class="action-scroll" scroll-x="true" show-scrollbar="{{false}}" enable-flex="true">
+          <view class="action-list">
+            <view wx:for="{{petActions}}" wx:key="key" class="action-card {{item.selected ? 'is-active' : ''}}" data-action="{{item.key}}" bindtap="handleSelectAction">
+              <view class="action-card-thumb">
+                <image class="action-card-image" src="{{petPreviewImage}}" mode="aspectFit"></image>
+              </view>
+              <text class="action-card-label">{{item.label}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="tool-section">
+        <view class="size-row size-row--panel">
+          <text class="size-label">大小</text>
+          <view class="size-button" bindtap="handleSizeMinus">-</view>
+          <view class="size-track">
+            <view class="size-track-fill" style="{{sizeTrackFillStyle}}"></view>
+            <view class="size-thumb" style="{{sizeThumbStyle}}"></view>
+          </view>
+          <view class="size-button" bindtap="handleSizePlus">+</view>
+          <text class="size-value">{{sizePercent}}%</text>
+        </view>
+      </view>
+
+      <view wx:if="{{showDevOnlyUi}}" class="tool-section">
+        <view class="tool-section-head">
+          <text class="tool-section-title">开发模拟</text>
+          <text class="tool-section-note">仅开发环境可见</text>
+        </view>
+        <scroll-view class="issue-strip issue-strip--panel" scroll-x="true" show-scrollbar="{{false}}" enable-flex="true">
+          <view class="issue-strip-inner">
+            <view wx:for="{{issueOptions}}" wx:key="key" class="issue-chip" data-reason="{{item.key}}" bindtap="handleIssue">{{item.label}}</view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-safe-bar bottom-safe-bar--compact">
+    <view class="safe-action" bindtap="handleTutorial">
+      <view class="safe-action-icon">?</view>
+      <text class="safe-action-label">教程</text>
+    </view>
+
+    <view class="safe-action" bindtap="handleSaveAlbum">
+      <view class="safe-action-icon">截</view>
+      <text class="safe-action-label">截图</text>
+    </view>
+
+    <view class="safe-action {{shareStatus === 'loading' ? 'safe-action-disabled' : ''}}" bindtap="handleShareButton">
+      <view class="safe-action-icon">享</view>
+      <text class="safe-action-label">{{shareStatus === 'loading' ? '准备中' : '分享'}}</text>
+    </view>
+
+    <view class="safe-action {{showToolPanel ? 'is-active' : ''}}" bindtap="toggleToolPanel">
+      <view class="safe-action-icon">...</view>
+      <text class="safe-action-label">更多</text>
+    </view>
+  </view>
+</view>
+
+<view wx:else class="ar-page">
+  <error-state
+    title="无法进入 AR 展示"
+    description="当前作品数据不可用，请返回作品页重新进入。"
+    primary-text="返回作品页"
+    bindprimary="handleGoWorks"
+  ></error-state>
+</view>

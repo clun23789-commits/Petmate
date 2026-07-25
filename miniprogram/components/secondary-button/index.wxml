@@ -1,0 +1,14 @@
+<button
+  class="secondary-button button-outer custom-class button-size-{{size}} button-variant-{{variant}} button-tone-{{tone}} {{block ? 'is-block' : 'is-inline'}} {{disabled ? 'is-disabled' : ''}} {{loading ? 'is-loading' : ''}}"
+  disabled="{{disabled || loading}}"
+  loading="{{loading}}"
+  open-type="{{openType}}"
+  form-type="{{formType}}"
+  hover-class="{{hoverClass}}"
+  bindtap="handleTap"
+>
+  <view class="button-copy">
+    <text class="button-text">{{text}}</text>
+    <text wx:if="{{subtext}}" class="button-subtext">{{subtext}}</text>
+  </view>
+</button>

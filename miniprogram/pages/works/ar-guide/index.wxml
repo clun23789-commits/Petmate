@@ -1,0 +1,84 @@
+<app-page-layout title="AR 功能说明" show-back="{{true}}" auto-back="{{false}}" bindback="handleBackResult">
+  <view wx:if="{{workAvailable}}" class="ar-guide-page">
+    <view class="ar-state-card ar-state-confirming">
+      <text class="state-eyebrow">当前作品 AR 功能</text>
+      <text class="state-title">AR 功能暂未开放</text>
+      <text class="state-desc">{{actionSubtext}}</text>
+      <primary-button text="{{actionText}}" subtext="后续版本开放，当前可先查看基础作品结果" bindpress="handleContinue"></primary-button>
+    </view>
+
+    <view class="ar-hero-card">
+      <view class="ar-hero-copy">
+        <text class="state-eyebrow">当前基础作品结果</text>
+        <text class="ar-hero-title">{{currentWorkName}}</text>
+        <text class="ar-hero-desc">作品已生成，可查看结果并继续补图优化。</text>
+      </view>
+
+      <view class="ar-hero-stage">
+        <view class="ar-floor-shadow"></view>
+        <image class="ar-hero-pet" src="{{heroImage}}" mode="aspectFit"></image>
+        <view class="ar-badge">OK</view>
+      </view>
+    </view>
+
+    <view class="current-work-card">
+      <image class="work-cover" src="{{heroImage}}" mode="aspectFill"></image>
+      <view class="work-copy">
+        <text class="work-label">当前宠物作品</text>
+        <text class="work-title">{{currentWorkName}}</text>
+        <text class="work-meta">{{statusLabel}} · 当前版本为基础作品结果</text>
+      </view>
+    </view>
+
+    <view class="rights-card">
+      <view class="section-head">
+        <text class="section-title">开放说明</text>
+        <text class="caption">当前版本不提供 AR 体验，也不会引导购买或进入不可用流程。</text>
+      </view>
+      <view class="rights-list">
+        <view class="rights-item" wx:for="{{rightsItems}}" wx:key="title">
+          <view class="rights-icon">{{item.icon}}</view>
+          <view class="rights-copy">
+            <text class="rights-title">{{item.title}}</text>
+            <text class="rights-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="condition-card">
+      <view class="section-head">
+        <text class="section-title">当前建议</text>
+        <text class="caption">先围绕基础作品结果完成查看、反馈和优化。</text>
+      </view>
+      <view class="condition-list">
+        <view class="condition-item" wx:for="{{conditionItems}}" wx:key="title">
+          <view class="condition-icon">{{item.icon}}</view>
+          <view class="condition-copy">
+            <text class="condition-title">{{item.title}}</text>
+            <text class="condition-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="ar-tip-row" bindtap="handleOpenTips">
+      <view class="ar-tip-icon">i</view>
+      <view class="ar-tip-copy">
+        <text class="ar-tip-title">AR 功能暂未开放</text>
+        <text class="ar-tip-desc">后续版本开放，当前可继续查看基础作品结果。</text>
+      </view>
+      <text class="ar-tip-arrow">›</text>
+    </view>
+
+    <secondary-button text="{{secondaryText}}" subtext="{{secondarySubtext}}" bindpress="handleBackResult"></secondary-button>
+  </view>
+
+  <error-state
+    wx:else
+    title="无法查看 AR 功能说明"
+    description="当前作品数据不可用，可能已被删除或尚未加载完成。"
+    primary-text="返回作品页"
+    bindprimary="handleGoWorks"
+  ></error-state>
+</app-page-layout>

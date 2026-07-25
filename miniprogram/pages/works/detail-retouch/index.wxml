@@ -1,0 +1,132 @@
+<app-page-layout title="细节补色" show-back="{{true}}">
+  <view wx:if="{{workAvailable}}" class="detail-retouch-page">
+    <view class="scope-banner">
+      <view class="scope-icon">盾</view>
+      <text class="scope-text">仅支持局部颜色与小面积瑕疵修补，不修改体型、脸型、耳朵或尾巴结构</text>
+    </view>
+
+    <view class="editor-section">
+      <view class="editor-preview-card">
+        <image class="pet-preview-image" src="{{mainPreviewSrc}}" mode="aspectFill"></image>
+
+        <view class="floating-tool rotate-tool" bindtap="handleRotatePreview">旋转</view>
+        <view class="floating-tool zoom-tool" bindtap="handleZoomPreview">＋</view>
+
+        <view class="focus-ring focus-ring-{{selectedPart}}"></view>
+      </view>
+
+      <view class="part-panel">
+        <text class="panel-title">局部部位选择</text>
+        <view
+          wx:for="{{partOptions}}"
+          wx:key="key"
+          class="part-item {{selectedPart === item.key ? 'is-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="handlePartTap"
+        >
+          <image class="part-thumb" src="{{item.thumb}}" mode="aspectFill"></image>
+          <text class="part-name">{{item.label}}</text>
+          <text class="part-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="compare-panel">
+      <text class="panel-title">修改前后对比</text>
+      <view class="compare-grid">
+        <view class="compare-image-wrap">
+          <image class="compare-image" src="{{beforeSrc}}" mode="aspectFill"></image>
+          <text class="compare-label">修改前</text>
+        </view>
+
+        <view class="compare-image-wrap">
+          <image class="compare-image" src="{{afterSrc}}" mode="aspectFill"></image>
+          <text class="compare-label">修改后</text>
+        </view>
+
+        <view class="compare-divider-button">Ⅱ</view>
+      </view>
+    </view>
+
+    <view class="tool-panel">
+      <text class="panel-title">工具栏</text>
+
+      <view class="tool-row color-tool-row">
+        <text class="tool-label">颜色选择</text>
+        <view class="color-strip">
+          <view
+            wx:for="{{colorOptions}}"
+            wx:key="value"
+            class="color-dot {{color === item.value ? 'is-active' : ''}} {{item.value === '#ffffff' ? 'is-light' : ''}}"
+            style="background: {{item.value}};"
+            data-color="{{item.value}}"
+            bindtap="handleColorTap"
+          ></view>
+
+          <view class="more-color" bindtap="handleMoreColor">
+            <view class="color-wheel"></view>
+            <text class="more-color-text">更多颜色</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="tool-row brush-row">
+        <text class="tool-label">画笔大小</text>
+        <slider
+          class="brush-slider"
+          min="8"
+          max="50"
+          step="1"
+          value="{{brushSize}}"
+          activeColor="#4d8738"
+          backgroundColor="#e9dfd0"
+          block-size="22"
+          bindchange="handleBrushChange"
+          bindchanging="handleBrushChanging"
+        />
+        <text class="brush-size-text">{{brushSize}}px</text>
+      </view>
+
+      <view class="tool-row action-tool-row">
+        <text class="tool-label">工具</text>
+        <view class="tool-action-list">
+          <view
+            wx:for="{{toolOptions}}"
+            wx:key="key"
+            class="tool-action {{activeTool === item.key ? 'is-active' : ''}} {{item.key === 'undo' || item.key === 'redo' ? 'is-utility' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="handleToolTap"
+          >
+            <text class="tool-icon">{{item.icon}}</text>
+            <text class="tool-name">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-actions">
+      <view wx:if="{{saveStatus === 'loading' || saveStatus === 'failed'}}" class="save-status save-status-{{saveStatus}}">
+        <text class="save-status-text">{{saveStatus === 'loading' ? '正在保存补色结果...' : saveErrorText}}</text>
+      </view>
+      <button class="secondary-retouch-button" disabled="{{saving}}" bindtap="handleCancel">放弃返回</button>
+      <button class="primary-retouch-button" loading="{{saving}}" disabled="{{saving}}" bindtap="handleSave">
+        <text class="primary-main">保存修改</text>
+        <text class="primary-sub">{{saveSubtext}}</text>
+      </button>
+    </view>
+
+    <view class="tips-card" bindtap="handleTipTap">
+      <view class="tips-icon">!</view>
+      <text class="tips-text">小提示：建议放大后细致涂抹，颜色过渡会更自然</text>
+      <text class="tips-arrow">›</text>
+    </view>
+  </view>
+
+  <error-state
+    wx:else
+    title="无法继续细节补色"
+    description="当前作品或模型版本不可用，请返回结果页重新进入。"
+    primary-text="返回结果页"
+    bindprimary="goBackToResult"
+  ></error-state>
+</app-page-layout>

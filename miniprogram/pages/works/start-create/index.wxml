@@ -1,0 +1,117 @@
+<app-page-layout title="开始创作" show-back="{{true}}">
+  <view class="start-create-page">
+    <view class="start-hero">
+      <view class="hero-copy">
+        <text class="hero-title">把你的猫狗</text>
+        <text class="hero-title">变成 3D 数字形象</text>
+        <text class="hero-subtitle">高识别度还原，带它走进真实世界</text>
+      </view>
+
+      <view class="hero-visual">
+        <view class="transform-strip">
+          <view class="hero-thumb thumb-photo">
+            <image class="thumb-image" src="{{hero.beforeImage}}" mode="aspectFill"></image>
+          </view>
+          <text class="hero-arrow">›</text>
+          <view class="hero-thumb thumb-model">
+            <image class="thumb-image" src="{{hero.modelImage}}" mode="aspectFill"></image>
+            <view class="wire-overlay"></view>
+            <view class="wire-star wire-star-a">
+              <view class="star-line star-line-horizontal"></view>
+              <view class="star-line star-line-vertical"></view>
+            </view>
+            <view class="wire-star wire-star-b">
+              <view class="star-line star-line-horizontal"></view>
+              <view class="star-line star-line-vertical"></view>
+            </view>
+          </view>
+          <text class="hero-arrow hero-arrow-second">›</text>
+        </view>
+
+        <image class="hero-pet" src="{{hero.modelImage}}" mode="aspectFit"></image>
+        <view class="sparkle sparkle-a">
+          <view class="sparkle-arm sparkle-arm-horizontal"></view>
+          <view class="sparkle-arm sparkle-arm-vertical"></view>
+        </view>
+        <view class="sparkle sparkle-b">
+          <view class="sparkle-arm sparkle-arm-horizontal"></view>
+          <view class="sparkle-arm sparkle-arm-vertical"></view>
+        </view>
+        <view class="sparkle sparkle-c">
+          <view class="sparkle-arm sparkle-arm-horizontal"></view>
+          <view class="sparkle-arm sparkle-arm-vertical"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="flow-card">
+      <view wx:for="{{steps}}" wx:key="no" wx:for-item="step" class="flow-step">
+        <view class="step-number">{{step.no}}</view>
+        <view class="step-icon-wrap">
+          <view class="step-icon">{{step.icon}}</view>
+        </view>
+        <text class="step-title">{{step.title}}</text>
+        <text class="step-desc">{{step.desc}}</text>
+        <view wx:if="{{step.showConnector}}" class="step-connector"></view>
+      </view>
+    </view>
+
+    <view class="support-card">
+      <view class="support-check">✓</view>
+      <view class="support-copy">
+        <text class="support-title">目前支持单只猫 / 狗</text>
+        <text class="support-desc">建议准备清晰正脸照，侧面照和全身照可作为补充素材</text>
+      </view>
+      <view class="support-pets">
+        <image class="support-cat" src="{{hero.catImage}}" mode="aspectFit"></image>
+        <image class="support-dog" src="{{hero.dogImage}}" mode="aspectFit"></image>
+        <view class="support-leaf leaf-a"></view>
+        <view class="support-leaf leaf-b"></view>
+      </view>
+    </view>
+
+    <view class="trial-card">
+      <view class="trial-icon">礼</view>
+      <view class="trial-copy">
+        <text class="trial-title">广告试用权益说明</text>
+        <view wx:for="{{rightsItems}}" wx:key="text" wx:for-item="right" class="rights-item">
+          <view class="rights-bullet">{{right.icon}}</view>
+          <text class="rights-text">{{right.text}}</text>
+        </view>
+      </view>
+      <view class="trial-tv">
+        <view class="tv-antenna tv-antenna-left"></view>
+        <view class="tv-antenna tv-antenna-right"></view>
+        <view class="tv-screen">
+          <view class="tv-play"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="action-stack">
+      <button class="action-button unlock-button" bindtap="handleUnlock">
+        <view class="action-copy">
+          <text class="action-title">解锁试用</text>
+          <text class="action-subtitle action-subtitle-light">观看激励广告，开启真实宠物创作</text>
+        </view>
+      </button>
+
+      <button class="action-button template-button" bindtap="handleTemplate">
+        <view class="action-copy">
+          <text class="action-title action-title-dark">先看官方示例模型</text>
+          <text class="action-subtitle">免费体验模型形态与基础互动</text>
+        </view>
+      </button>
+    </view>
+
+    <view class="privacy-tip">
+      <text class="privacy-icon">盾</text>
+      <text class="privacy-text">你的照片仅用于模型生成，最长保留 72 小时，完成后自动删除</text>
+    </view>
+
+    <view wx:if="{{showDevOnlyUi}}" class="dev-note">
+      <text class="dev-note-title">开发说明</text>
+      <text class="dev-note-text">当前页面仍使用本地 mock 图和静态说明数据，用于验证开始创作页的视觉结构与跳转链路。</text>
+    </view>
+  </view>
+</app-page-layout>

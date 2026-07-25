@@ -1,0 +1,139 @@
+<app-page-layout title="上传与质检" show-back="{{true}}">
+  <view class="upload-page-shell">
+    <view class="upload-quality-page">
+      <view class="page-hero-copy">
+        <text class="page-hero-title">上传与质检</text>
+        <text class="page-hero-subtitle">上传清晰的照片，能让生成结果更像你的宠物</text>
+      </view>
+
+      <view class="notice-strip">
+        <view class="notice-icon">提</view>
+        <text class="notice-text">
+          正脸、侧面、全身是
+          <text class="notice-strong">推荐视角，不是必须三张。</text>
+          照片越清晰、多角度，结果会越好看哦！
+        </text>
+      </view>
+
+      <view class="selected-card page-card">
+        <view class="selected-header">
+          <view class="selected-title-copy">
+            <text class="section-title">已选择的照片（{{assets.length}}/10）</text>
+            <text class="caption">先上传一张清晰正脸照即可开始，补充更多角度会更像</text>
+          </view>
+
+          <view wx:if="{{assets.length}}" class="selected-actions">
+            <view class="mini-action" bindtap="handleBatchManage">批量管理</view>
+            <view class="mini-action" bindtap="handleClearAll">清空全部</view>
+          </view>
+        </view>
+
+        <view wx:if="{{!assets.length}}" class="upload-start-panel" data-slot="front" bindtap="handleSelect">
+          <view class="upload-start-icon">照</view>
+          <text class="upload-start-title">先上传一张清晰正脸照</text>
+          <text class="upload-start-desc">达到最低标准后即可开始生成，侧面和全身照只是推荐补充</text>
+          <view class="upload-start-cta">添加照片</view>
+        </view>
+
+        <scroll-view wx:else scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}" class="selected-scroll">
+          <view class="selected-photo-row">
+            <view wx:for="{{selectedPhotos}}" wx:key="assetId" class="selected-photo-item">
+              <view class="selected-thumb-wrap">
+                <image class="selected-thumb" src="{{item.localPath}}" mode="aspectFill"></image>
+                <view class="selected-remove" data-asset-id="{{item.assetId}}" catchtap="handleRemove">×</view>
+              </view>
+              <view class="selected-meta">
+                <view class="selected-check">✓</view>
+                <text class="selected-label">{{item.label}}</text>
+              </view>
+              <text class="selected-quality selected-quality-{{item.qualityTone}}">{{item.qualityText}}</text>
+            </view>
+
+            <view wx:if="{{assets.length < 10}}" class="selected-add-card" data-slot="{{nextSlot}}" bindtap="handleSelect">
+              <view class="selected-add-icon">照</view>
+              <text class="selected-add-text">继续添加</text>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="upload-tip-strip">
+          <view class="upload-tip-icon">贴</view>
+          <text class="upload-tip-text">小贴士：自然光下拍摄，主体清晰不模糊，无遮挡更容易生成高识别度形象。</text>
+        </view>
+      </view>
+
+      <view class="recommend-card page-card {{!assets.length ? 'is-compact' : ''}}">
+        <view class="section-heading-row">
+          <text class="section-title">{{assets.length ? '还可以补充这些角度' : '推荐上传视角'}}</text>
+          <text class="section-subtitle">推荐但不强制</text>
+        </view>
+
+        <view class="recommend-grid">
+          <view
+            wx:for="{{recommendations}}"
+            wx:key="key"
+            class="recommend-angle-card"
+            data-slot="{{item.key}}"
+            bindtap="handleSelect"
+          >
+            <view class="recommend-icon">{{item.icon}}</view>
+            <text class="recommend-title">{{item.label}}</text>
+            <text class="recommend-helper">{{item.helper}}</text>
+            <image wx:if="{{assets.length}}" class="recommend-image" src="{{item.image}}" mode="aspectFit"></image>
+          </view>
+        </view>
+
+        <text class="recommend-footnote">你也可以补充其他角度，如背面、俯视等，帮助更好地还原细节。</text>
+      </view>
+
+      <view class="quality-card page-card">
+        <view class="section-heading-row">
+          <text class="section-title">质检结果</text>
+          <view class="recheck-action" bindtap="handleRecheck">
+            <text class="recheck-label">重新检查</text>
+            <text class="recheck-icon">↻</text>
+          </view>
+        </view>
+
+        <view class="quality-summary quality-summary-{{qualitySummary.tone}}">
+          <view class="quality-summary-icon">{{qualitySummary.icon}}</view>
+          <view class="quality-summary-copy">
+            <text class="quality-summary-title">{{qualitySummary.title}}</text>
+            <text class="quality-summary-desc">{{qualitySummary.desc}}</text>
+          </view>
+        </view>
+
+        <view class="quality-detail-toggle" bindtap="handleToggleQualityDetails">
+          <text>{{showQualityDetails ? '收起详细质检' : '查看详细质检'}}</text>
+          <text class="quality-detail-arrow">{{showQualityDetails ? '⌃' : '⌄'}}</text>
+        </view>
+
+        <view wx:if="{{showQualityDetails}}" class="quality-list">
+          <view wx:for="{{qualityChecks}}" wx:key="title" class="quality-row">
+            <view class="quality-left">
+              <view class="quality-icon quality-icon-{{item.tone}}">{{item.icon}}</view>
+              <text class="quality-title">{{item.title}}</text>
+            </view>
+
+            <view class="quality-right">
+              <text class="quality-result quality-result-{{item.tone}}">{{item.result}}</text>
+              <text class="quality-helper">{{item.helper}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="bottom-quality-banner bottom-quality-banner-{{bottomStatusTone}}">
+        <view class="bottom-quality-icon">{{bottomStatusIcon}}</view>
+        <text class="bottom-quality-text">{{bottomStatusText}}</text>
+      </view>
+    </view>
+
+    <view class="fixed-submit-bar">
+      <view class="submit-main-button {{submitDisabled ? 'is-disabled' : ''}} {{submitLoading ? 'is-loading' : ''}}" bindtap="handleSubmit">
+        <text class="submit-main-text">{{primaryText}}</text>
+        <text class="submit-sub-text">{{primarySubtext}}</text>
+      </view>
+    </view>
+  </view>
+</app-page-layout>

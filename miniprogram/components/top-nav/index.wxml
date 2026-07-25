@@ -1,0 +1,12 @@
+<view class="nav-wrap nav-tone-{{tone}} nav-size-{{size}} nav-align-{{align}} {{customClass}}" style="{{navWrapStyle}}">
+  <view class="nav-main" style="{{navMainStyle}}">
+    <view class="nav-side" style="{{sideStyle}}">
+      <button wx:if="{{showBack}}" class="nav-back" aria-label="{{backLabel || '返回'}}" bindtap="handleBack">‹</button>
+    </view>
+    <view class="nav-copy">
+      <text class="nav-title">{{title}}</text>
+      <text wx:if="{{subtitle}}" class="nav-subtitle">{{subtitle}}</text>
+    </view>
+    <view class="nav-side nav-side-placeholder" style="{{sideStyle}}"></view>
+  </view>
+</view>

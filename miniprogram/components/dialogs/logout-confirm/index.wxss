@@ -1,0 +1,162 @@
+@import "../../../styles/tokens.wxss";
+@import "../../../styles/layout.wxss";
+@import "../../../styles/page.wxss";
+
+.logout-dialog-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-index-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 40rpx;
+  background: var(--color-bg-overlay);
+}
+
+.logout-dialog-card {
+  position: relative;
+  width: 100%;
+  max-width: 560rpx;
+  box-sizing: border-box;
+  padding: 42rpx 34rpx 36rpx;
+  border: 1rpx solid var(--color-border-light);
+  border-radius: var(--radius-xxl);
+  background: var(--color-bg-card-strong);
+  box-shadow: var(--shadow-modal);
+  transform: translateY(-14rpx);
+}
+
+.dialog-close {
+  position: absolute;
+  right: 24rpx;
+  top: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-tertiary);
+  background: transparent;
+  font-size: 48rpx;
+  font-weight: 300;
+  line-height: 52rpx;
+}
+
+.dialog-close::after,
+.confirm-button::after,
+.cancel-button::after {
+  border: 0;
+}
+
+.dialog-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6rpx 46rpx 0;
+}
+
+.dialog-title {
+  color: var(--color-text-primary);
+  font-size: 34rpx;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.dialog-question {
+  display: block;
+  margin-top: 20rpx;
+  color: var(--color-text-primary);
+  font-size: 27rpx;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.dialog-desc {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.logout-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  min-height: 54rpx;
+  box-sizing: border-box;
+  margin-top: 24rpx;
+  padding: 12rpx 18rpx;
+  border: 1rpx solid var(--color-border-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-warning);
+}
+
+.hint-icon {
+  flex-shrink: 0;
+  width: 28rpx;
+  height: 28rpx;
+  box-sizing: border-box;
+  border: 2rpx solid var(--color-warning);
+  border-radius: var(--radius-pill);
+  color: var(--color-warning);
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 24rpx;
+  text-align: center;
+}
+
+.hint-text {
+  color: var(--color-text-warning);
+  font-size: 21rpx;
+  line-height: 1.45;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 30rpx;
+}
+
+.confirm-button,
+.cancel-button {
+  width: 100%;
+  height: 88rpx;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.confirm-button {
+  color: var(--color-text-inverse);
+  background: var(--gradient-brand-button);
+  box-shadow: var(--shadow-button);
+  line-height: 88rpx;
+}
+
+.cancel-button {
+  border: 1rpx solid var(--color-border-success);
+  color: var(--color-success);
+  background: var(--color-bg-card-strong);
+  line-height: 86rpx;
+}
+
+.button-hover {
+  opacity: 0.84;
+}

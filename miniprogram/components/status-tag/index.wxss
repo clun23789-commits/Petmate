@@ -1,0 +1,64 @@
+@import "../../styles/layout.wxss";
+@import "../../styles/page.wxss";
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  min-height: 44rpx;
+  padding: 0 16rpx;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  line-height: 1;
+}
+
+.tag-medium {
+  min-height: 52rpx;
+  padding: 0 20rpx;
+}
+
+.tag-rounded {
+  border-radius: var(--radius-sm);
+}
+
+.tag-neutral {
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+}
+
+.tag-success {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.tag-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.tag-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.tag-brand {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-primary-pressed);
+}
+
+.tag-icon {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tag-text {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.tag-medium .tag-text {
+  font-size: var(--font-size-sm);
+}
