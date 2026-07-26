@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applyQuotaToStore = applyQuotaToStore;
 exports.syncOptimizeQuota = syncOptimizeQuota;
-exports.grantOptimizeQuotaFromAd = grantOptimizeQuotaFromAd;
 exports.reserveOptimizationQuota = reserveOptimizationQuota;
 exports.releaseOptimizationReservation = releaseOptimizationReservation;
 exports.commitOptimizationReservation = commitOptimizationReservation;
@@ -108,27 +107,6 @@ async function syncOptimizeQuota(options = {}) {
         };
     } catch (error) {
         setQuotaFailed(error, "syncOptimizeQuotaFailed");
-        return {
-            ok: false,
-            error
-        };
-    }
-}
-
-async function grantOptimizeQuotaFromAd(payload = {}) {
-    try {
-        const result = await optimizationService.grantOptimizeQuota(payload);
-
-        if (result && result.quota) {
-            applyQuotaToStore(result.quota);
-        }
-
-        return {
-            ok: true,
-            ...(result || {})
-        };
-    } catch (error) {
-        setQuotaFailed(error, "grantOptimizeQuotaFromAdFailed");
         return {
             ok: false,
             error

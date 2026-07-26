@@ -38,4 +38,8 @@ P0-01 已在源码中完成优化次数事务化：`reserveOptimizeQuota / commi
 
 清理云函数源码已增加客户端调用隔离：带普通用户 `OPENID` 的请求会在数据库扫描前被拒绝；成功响应只返回汇总数字，失败日志中的用户、预占、任务和作品标识使用 12 位哈希引用。development 已完成清理云函数、函数安全规则、`idx_status_expires` 索引和每 10 分钟定时触发器配置；staging 尚未独立部署，production 尚未部署。
 
+P0-02 已在源码中完成广告奖励可信结算链路：前端在展示广告前调用 `createAdRewardSession` 创建 10 分钟 pending 会话，`grantAdReward` 在单个事务内写入 `adRewardGrants / optimizeQuotaGrants / optimizeQuotas` 并固定增加 3 次；重复与并发结算保持幂等。`getAdRewardStatus` 只在广告记录、次数流水和配额汇总完整时返回 `granted + quota`，旧 `grantOptimizeQuota` 已降级为只读兼容查询，前端不再调用独立次数发放入口。源码单元测试与静态契约已补齐，但相关云函数、两个新增建议索引和新版小程序仍需按部署清单在目标测试环境手动部署、创建并真机验证。
+
+广告完成证据仍来自微信客户端关闭回调，只能记录为 `client_reported / client_confirmed`，不等于服务端或密码学验证。真实广告位 ID 仍为空，production 仍未启用；完整边界见 `docs/ad_reward_security_boundary.md`。
+
 若后续修改产品规则，优先更新对应主事实源，并同步本文件的状态摘要或事实源归属表，避免代码版本、产品规则和设计入口出现偏差。

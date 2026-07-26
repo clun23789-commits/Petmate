@@ -237,18 +237,23 @@
 
 ## optimizeQuotaGrants
 
-保存激励广告带来的优化次数发放记录，用于保证同一次广告不会重复发放次数。
+保存激励广告结算产生的优化次数发放流水。该记录与广告会话、次数汇总由 `grantAdReward` 在同一个事务内写入。
 
 ```js
 {
   _id: "optimize_grant_xxx",
-  openid: "微信 openid",
-  workId: "work-xxx，可为空",
+  schemaVersion: 2,
 
+  grantId: "quota-grant-xxx",
+  openid: "微信 openid",
+
+  adGrantId: "grant-xxx",
+  adRewardDocId: "ad_reward_xxx",
+
+  workId: "work-xxx，可为空",
   rewardScene: "initial_unlock / optimize_quota",
   clientRewardId: "前端本次广告试看生成的唯一 ID",
-  adGrantId: "grant-xxx",
-  idempotencyKey: "openid:rewardScene:clientRewardId",
+  idempotencyKey: "openid:adGrantId",
 
   count: 3,
   source: "rewarded_video_ad",
@@ -262,16 +267,12 @@
 ```
 
 规则：
-- `openid + idempotencyKey` 用于幂等判断，同一次广告只允许增加一次 `optimizeQuotas.grantedCount`。
-- `initial_unlock` 和 `optimize_quota` 都可以发放优化次数，默认每次发放 3 次。
-- `rewardScene === "optimize_quota"` 且传入 `workId` 时，云函数需要校验作品仍归属当前用户且未删除。
-- 前端异常恢复时重复调用发放接口，应返回已有记录和最新配额，不重复增加次数。
-
-规则补充：
-- `clientRewardId` 必填，缺失时云函数必须拒绝发放。
-- `idempotencyKey` 必须由云函数固定生成为 `OPENID + ":" + rewardScene + ":" + clientRewardId`，不允许使用前端传入的 `idempotencyKey`。
-- 当前阶段每次优化次数发放固定为 3 次；即使历史记录或前端传入更大 `count`，云函数也不能超过 3 次。
-- 同一个 `clientRewardId` 在同一 `rewardScene` 下重复调用时，只返回已有发放记录和最新配额，不得重复增加 `grantedCount`。
+- `_id` 由 `openid + adGrantId` 生成确定性文档 ID；同一个广告 grant 只能存在一条流水。
+- `count` 固定为 3，只能由云函数常量决定，不读取前端传入的次数。
+- 只有 `grantAdReward` 的结算事务可以创建 schemaVersion 2 流水并增加 `optimizeQuotas.grantedCount`。
+- `grantOptimizeQuota` 已降级为只读兼容查询，不得创建流水或修改次数汇总。
+- `getAdRewardStatus` 只校验流水和汇总是否完整，不能修补或重新发放。
+- 历史 schemaVersion 1 记录保留用于审计，不自动补发、不自动改写 `quotaApplied`。
 
 ## optimizeReservations
 
@@ -315,26 +316,41 @@
 
 ## adRewardGrants
 
-保存用户完成激励广告后的试用权益发放记录。当前阶段默认仍使用 mock 广告；真实广告上线前需要部署对应云函数并确认索引已手动创建。
+保存广告展示前由云端创建的短期奖励会话，以及会话完成后的结算状态。当前阶段默认仍使用 mock 广告；真实广告尚未启用。
 
 ```js
 {
   _id: "ad_reward_xxx",
+  schemaVersion: 2,
+
   grantId: "grant-xxx",
   openid: "微信 openid",
-  workId: "work-xxx，可为空",
 
   rewardScene: "initial_unlock / optimize_quota",
+  workId: "work-xxx，可为空",
+  source: "first_create / optimize_refill / recover",
+
   clientRewardId: "前端本次广告试看生成的唯一 ID",
   idempotencyKey: "openid:rewardScene:clientRewardId",
 
-  status: "granted / revoked",
-  source: "rewarded_video_ad",
-  adResult: {
+  status: "pending / granted / expired / rejected",
+
+  completionEvidence: {
+    type: "wechat_client_on_close / mock",
     status: "completed",
-    raw: {}
+    trustLevel: "client_reported / mock",
+    receivedAt: Date
   },
-  verificationStatus: "reserved",
+  verificationStatus: "pending / client_confirmed / mock_confirmed",
+
+  quotaCount: 3,
+  quotaApplied: false,
+  quotaGrantId: "",
+
+  expiresAt: Date,
+  settledAt: null,
+  rejectedAt: null,
+  expiredAt: null,
 
   createdAt: Date,
   updatedAt: Date
@@ -344,11 +360,14 @@
 规则：
 
 - `openid` 必须由云函数根据 `cloud.getWXContext()` 写入，前端传入值不能覆盖。
-- 同一个 `openid + rewardScene + clientRewardId` 只能发放一次。
-- 只有 `adResult.status === "completed"` 才能写入 `granted` 权益。
-- `initial_unlock` 用于首次创作试用权益。
-- `optimize_quota` 用于补充优化次数。
-- 当前阶段 `verificationStatus = "reserved"`，表示先预留广告结果校验字段，后续如接入更严格服务端校验可继续扩展。
+- `_id` 由 `openid + rewardScene + clientRewardId` 生成确定性文档 ID；会话有效期为 10 分钟。
+- 状态只允许 `pending -> granted / expired / rejected`，终态不得再次转换。
+- `initial_unlock` 可不绑定作品；`optimize_quota` 必须绑定当前用户未删除作品，并在创建、结算时各校验一次。
+- `grantAdReward` 只读取会话中已绑定的 `rewardScene / workId / source`，不接受结算请求覆盖。
+- `granted` 必须与 `optimizeQuotaGrants.status = granted / quotaApplied = true` 和合法 `optimizeQuotas` 汇总同时成立。
+- 完成证据只保存白名单字段；不得保存完整客户端 `adResult.raw`。
+- `completionEvidence.trustLevel = client_reported` 和 `verificationStatus = client_confirmed` 不表示服务端或密码学验证。
+- 历史记录保留用于审计，不自动标记已验证、不自动补发奖励。
 
 ## orders
 

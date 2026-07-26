@@ -8,12 +8,14 @@ const AD_CONFIG = {
   /*
    * Development demos stay on mock rewarded ads by default.
    * Before enabling real rewarded ads, fill rewardedVideoAdUnitId and deploy
-   * grantAdReward / getAdRewardStatus cloud functions.
+   * createAdRewardSession / grantAdReward / getAdRewardStatus cloud functions.
    */
   useRealRewardedAd: AD_SERVICE_MODE === SERVICE_MODE_VALUE.REAL,
   rewardedVideoAdUnitId: "",
   rewardTimeoutMs: 15000,
-  enableAdRewardCloudGrant: AD_SERVICE_MODE === SERVICE_MODE_VALUE.REAL
+  enableAdRewardCloudGrant:
+    AD_SERVICE_MODE === SERVICE_MODE_VALUE.CLOUD ||
+    AD_SERVICE_MODE === SERVICE_MODE_VALUE.REAL
 };
 
 module.exports = {

@@ -42,20 +42,6 @@ async function getOptimizeQuota() {
   return data.quota;
 }
 
-function grantOptimizeQuota(payload = {}) {
-  return callOptimizeFunction(
-    "grantOptimizeQuota",
-    {
-      workId: payload.workId || "",
-      rewardScene: payload.rewardScene || "",
-      source: payload.source || "",
-      clientRewardId: payload.clientRewardId || "",
-      adGrantId: payload.adGrantId || payload.grantId || ""
-    },
-    "OPTIMIZE_QUOTA_GRANT_FAILED"
-  );
-}
-
 function reserveOptimizeQuota(payload = {}) {
   return callOptimizeFunction(
     "reserveOptimizeQuota",
@@ -79,7 +65,6 @@ function commitOptimizeQuota(reservationId, taskId) {
 
 module.exports = {
   getOptimizeQuota,
-  grantOptimizeQuota,
   reserveOptimizeQuota,
   releaseOptimizeQuota,
   commitOptimizeQuota

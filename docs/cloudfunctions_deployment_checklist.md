@@ -24,22 +24,23 @@
 | 7 | `createUploadAsset` | 上传 | `uploadAssets`, `works` | 上传记录归属当前用户 |
 | 8 | `startGenerationTask` | 生成 | `generationTasks`, `works`, `optimizeReservations` | initial 创建基础任务；优化任务与 reservation 原子绑定 |
 | 9 | `pollGenerationTask` | 生成 | `generationTasks`, `works`, `workVersions` | 轮询当前用户任务；provider 成功后幂等写入作品和版本 |
-| 10 | `grantAdReward` | 广告权益 | `adRewardGrants`, `works` | 完整广告才发放权益 |
-| 11 | `getAdRewardStatus` | 广告权益 | `adRewardGrants` | 可查询发放状态 |
-| 12 | `getOptimizeQuota` | 优化次数 | `optimizeQuotas` | 返回 availableCount/remainingCount |
-| 13 | `grantOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeQuotaGrants`, `works` | 幂等发放 3 次 |
-| 14 | `reserveOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `works` | 可用次数足够才预占 |
-| 15 | `releaseOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 仅未绑定或明确失败任务可释放 |
-| 16 | `commitOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 成功且结果已保存后事务扣减 |
-| 17 | `cleanupExpiredOptimizeReservations` | 优化次数运维 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 定时恢复 `expiresAt` 过期预占 |
-| 18 | `createPaymentOrder` | 支付订单 | `orders`, `works`, `arEntitlements` | 已有权益不重复下单 |
-| 19 | `getPaymentOrder` | 支付订单 | `orders` | 只能查当前用户订单 |
-| 20 | `markPaymentPaid` | 支付订单 | `orders`, `arEntitlements`, `works` | mock 支付确认后进入 paid/pending_sync |
-| 21 | `grantArEntitlement` | AR 权益 | `arEntitlements`, `orders`, `works` | paid 订单才发权益 |
-| 22 | `getArEntitlement` | AR 权益 | `arEntitlements`, `works` | deleted 作品不返回可用权益 |
-| 23 | `createShare` | 分享 | `shares`, `works`, `workVersions` | 只允许 ready/retouched 作品分享 |
-| 24 | `getShare` | 分享 | `shares`, `works` | 过期或删除作品不可预览 |
-| 25 | `expireSharesForWork` | 分享 | `shares` | 删除作品后失效 active 分享 |
+| 10 | `createAdRewardSession` | 广告权益 | `adRewardGrants`, `works` | 广告展示前创建 10 分钟 pending 会话并绑定场景/作品 |
+| 11 | `grantAdReward` | 广告权益/优化次数 | `adRewardGrants`, `optimizeQuotaGrants`, `optimizeQuotas`, `works` | 单事务结算并固定增加 3 次 |
+| 12 | `getAdRewardStatus` | 广告权益 | `adRewardGrants`, `optimizeQuotaGrants`, `optimizeQuotas` | 只在完整结算后返回 granted 与 quota |
+| 13 | `grantOptimizeQuota` | 旧版兼容查询 | `adRewardGrants`, `optimizeQuotaGrants`, `optimizeQuotas` | 只读返回已结算记录，不能增加次数 |
+| 14 | `getOptimizeQuota` | 优化次数 | `optimizeQuotas` | 返回 availableCount/remainingCount |
+| 15 | `reserveOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `works` | 可用次数足够才预占 |
+| 16 | `releaseOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 仅未绑定或明确失败任务可释放 |
+| 17 | `commitOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 成功且结果已保存后事务扣减 |
+| 18 | `cleanupExpiredOptimizeReservations` | 优化次数运维 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 定时恢复 `expiresAt` 过期预占 |
+| 19 | `createPaymentOrder` | 支付订单 | `orders`, `works`, `arEntitlements` | 已有权益不重复下单 |
+| 20 | `getPaymentOrder` | 支付订单 | `orders` | 只能查当前用户订单 |
+| 21 | `markPaymentPaid` | 支付订单 | `orders`, `arEntitlements`, `works` | mock 支付确认后进入 paid/pending_sync |
+| 22 | `grantArEntitlement` | AR 权益 | `arEntitlements`, `orders`, `works` | paid 订单才发权益 |
+| 23 | `getArEntitlement` | AR 权益 | `arEntitlements`, `works` | deleted 作品不返回可用权益 |
+| 24 | `createShare` | 分享 | `shares`, `works`, `workVersions` | 只允许 ready/retouched 作品分享 |
+| 25 | `getShare` | 分享 | `shares`, `works` | 过期或删除作品不可预览 |
+| 26 | `expireSharesForWork` | 分享 | `shares` | 删除作品后失效 active 分享 |
 
 ## 建议部署顺序
 
@@ -49,7 +50,8 @@
 - [ ] 确认 `users`、`works`、`workVersions`、`uploadAssets`、`generationTasks`、`adRewardGrants`、`optimizeQuotas`、`optimizeQuotaGrants`、`optimizeReservations`、`orders`、`arEntitlements`、`shares` 集合存在。
 - [ ] 按用户/作品基础函数部署：`syncUser`、`updateUserProfile`、`saveWork`、`listWorks`、`getWork`、`deleteWork`。
 - [ ] 部署上传/生成函数：`createUploadAsset`、`startGenerationTask`、`pollGenerationTask`。
-- [ ] 部署广告/优化次数函数：`grantAdReward`、`getAdRewardStatus`、`getOptimizeQuota`、`grantOptimizeQuota`、`reserveOptimizeQuota`、`releaseOptimizeQuota`、`commitOptimizeQuota`、`cleanupExpiredOptimizeReservations`。
+- [ ] 严格按顺序部署广告结算函数：`createAdRewardSession`、`grantAdReward`、`getAdRewardStatus`、`grantOptimizeQuota`。
+- [ ] 部署优化次数函数：`getOptimizeQuota`、`reserveOptimizeQuota`、`releaseOptimizeQuota`、`commitOptimizeQuota`、`cleanupExpiredOptimizeReservations`。
 - [ ] 部署支付/权益函数：`createPaymentOrder`、`getPaymentOrder`、`markPaymentPaid`、`grantArEntitlement`、`getArEntitlement`。
 - [ ] 部署分享函数：`createShare`、`getShare`、`expireSharesForWork`。
 - [ ] 使用微信开发者工具逐个上传并部署，部署方式选择云端安装依赖。
@@ -82,6 +84,18 @@
 - [ ] 为 `cleanupExpiredOptimizeReservations` 配置定时触发器：每 10 分钟执行一次，每批最多 100 条；该函数不在小程序 service 层暴露普通调用入口。
 - [ ] 验证 reservation 新字段：`expiresAt` 为服务端时间、`boundAt` 在任务绑定时写入、`releaseReason` 仅由服务端写入。
 - [ ] 对测试用户核对 `optimizeQuotas.reservedCount` 等于同 openid 下 `optimizeReservations.status = reserved` 的记录数。
+
+## P0-02 广告奖励事务结算部署提醒
+
+- [ ] 部署前备份 `adRewardGrants`、`optimizeQuotaGrants`、`optimizeQuotas`；历史记录只保留审计，不批量改状态、不自动补发。
+- [ ] 先运行 `npm run test:optimize-quota`、`npm run test:ad-reward`、`npm run check:ad-reward-settlement` 与 `npm run check`。
+- [ ] 确认 `adRewardGrants`、`optimizeQuotaGrants`、`optimizeQuotas`、`works` 四个集合存在。
+- [ ] 按 `createAdRewardSession -> grantAdReward -> getAdRewardStatus -> grantOptimizeQuota` 顺序同批部署，随后再上传新版小程序。
+- [ ] 在 development / staging 手动创建 `adRewardGrants.idx_openid_scene_created` 与 `adRewardGrants.idx_openid_status_expires`；核心事务使用确定性 `_id`，不依赖这两个索引才能正确运行。
+- [ ] 验证无会话结算被拒绝、同一会话重复/并发结算只增加 3 次、任意事务写失败全部回滚、异常页重复查询不增加次数。
+- [ ] 验证直接调用 `grantOptimizeQuota` 只返回既有结算，`optimizeQuotas.grantedCount` 不变化。
+- [ ] 真实广告位 ID 继续保持为空；本阶段不启用 production，不写入 AppSecret 或其他敏感配置。
+- [ ] 微信客户端 `isEnded` 仍只是 `client_reported` 完成证据，不能对外称为服务端验证；详见 `docs/ad_reward_security_boundary.md`。
 
 ## cleanupExpiredOptimizeReservations 安全部署
 

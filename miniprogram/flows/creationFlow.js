@@ -14,7 +14,6 @@ const auth_1 = require("../services/auth");
 const generation_1 = require("../services/generation");
 const upload_1 = require("../services/upload");
 const experience_1 = require("../config/experience");
-const mockRights_1 = require("../mocks/data/mockRights");
 const createStore_1 = require("../store/core/createStore");
 const id_1 = require("../utils/id");
 const navigation_1 = require("../utils/navigation");
@@ -99,10 +98,10 @@ function getAdRewardGrantKeys(rewardScene, grantResult = {}) {
     const grantId = grantResult.grantId || "";
     const keys = [];
     if (clientRewardId) {
-        keys.push(`${rewardScene}:client:${clientRewardId}`, clientRewardId);
+        keys.push(`${rewardScene}:client:${clientRewardId}`);
     }
     if (grantId) {
-        keys.push(`${rewardScene}:grant:${grantId}`, grantId);
+        keys.push(`${rewardScene}:grant:${grantId}`);
     }
     return Array.from(new Set(keys));
 }
@@ -156,23 +155,36 @@ async function applyGrantedAdReward(source, rewardScene, grantResult) {
             }
         };
     }, "applyGrantedAdReward");
+    if (grantResult.quota) {
+        (0, optimizeQuota_1.applyQuotaToStore)(grantResult.quota);
+    }
     if (alreadyGranted) {
         return {
             ok: true,
-            duplicated: true
+            duplicated: true,
+            quota: grantResult.quota || null
         };
     }
-    return (0, optimizeQuota_1.grantOptimizeQuotaFromAd)({
-        workId: getCurrentAdRewardWorkId(rewardScene),
-        rewardScene,
-        source,
-        clientRewardId: grantResult.clientRewardId || "",
-        adGrantId: grantResult.grantId || "",
-        count: mockRights_1.mockRights.optimizeCountPerAd
-    });
+    return {
+        ok: true,
+        duplicated: false,
+        quota: grantResult.quota || null
+    };
 }
 function shouldStayOnAdUnlockPage(status) {
     return status === "skipped" || status === "unavailable";
+}
+function continueAfterGrantedAdReward(source) {
+    const pendingReturnRoute = getPendingTrialReturnRoute();
+    if ((source === "optimize_refill" || source === "recover") && pendingReturnRoute) {
+        clearTrialReturnRoute();
+        (0, navigation_1.replace)(pendingReturnRoute);
+        return true;
+    }
+    (0, navigation_1.replace)(PAGE_ROUTES.works.upload, {
+        mode: "initial"
+    });
+    return true;
 }
 
 function hasOwn(target, key) {
@@ -308,7 +320,30 @@ async function unlockTrial(source, scenario = "success") {
     }
     const rewardScene = getRewardSceneForSource(source);
     const clientRewardId = (0, id_1.createId)("ad-reward");
+    const workId = getCurrentAdRewardWorkId(rewardScene);
     setTrialUnlockStatus("loading", "正在准备激励广告，请稍候。");
+    const sessionResult = await (0, ad_1.createAdRewardSession)({
+        rewardScene,
+        workId,
+        source,
+        clientRewardId
+    });
+    if (!sessionResult.ok) {
+        const message = sessionResult.message || "广告奖励会话创建失败，请稍后重试";
+        setTrialUnlockStatus(sessionResult.status || "failed", message);
+        (0, toast_1.showToast)(message);
+        return false;
+    }
+    if (sessionResult.status === "granted") {
+        await applyGrantedAdReward(source, rewardScene, sessionResult);
+        return continueAfterGrantedAdReward(source);
+    }
+    if (sessionResult.status !== "pending") {
+        const message = sessionResult.message || "广告奖励会话状态异常，请稍后重试";
+        setTrialUnlockStatus("failed", message);
+        (0, toast_1.showToast)(message);
+        return false;
+    }
     const adResult = await (0, ad_1.showRewardedAd)({
         source,
         rewardScene,
@@ -334,14 +369,9 @@ async function unlockTrial(source, scenario = "success") {
     }
     setTrialUnlockStatus("loading", "广告已完成，正在确认试用权益。");
     const grantResult = await (0, ad_1.grantAdReward)({
-        workId: getCurrentAdRewardWorkId(rewardScene),
         rewardScene,
-        source,
         clientRewardId,
-        adResult: {
-            status: adResult.status,
-            raw: adResult.raw || {}
-        }
+        completionStatus: adResult.status
     });
     if (!grantResult.ok || grantResult.status !== "granted") {
         setTrialUnlockStatus("rightUnknown", grantResult.message || "广告已结束，但试用权益状态还没有确认下来。");
@@ -355,16 +385,7 @@ async function unlockTrial(source, scenario = "success") {
         return false;
     }
     await applyGrantedAdReward(source, rewardScene, grantResult);
-    const pendingReturnRoute = getPendingTrialReturnRoute();
-    if ((source === "optimize_refill" || source === "recover") && pendingReturnRoute) {
-        clearTrialReturnRoute();
-        (0, navigation_1.replace)(pendingReturnRoute);
-        return true;
-    }
-    (0, navigation_1.replace)(PAGE_ROUTES.works.upload, {
-        mode: "initial"
-    });
-    return true;
+    return continueAfterGrantedAdReward(source);
 }
 function setTrialReturnRoute(route) {
     createStore_1.store.setState((state) => ({
