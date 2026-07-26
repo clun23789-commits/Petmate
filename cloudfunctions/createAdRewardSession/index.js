@@ -1,13 +1,13 @@
 "use strict";
 
 const cloud = require("wx-server-sdk");
-const { createGrantOptimizeQuotaHandler } = require("./core");
+const { createAdRewardSessionHandler } = require("./core");
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
 
-exports.main = createGrantOptimizeQuotaHandler({
+exports.main = createAdRewardSessionHandler({
   cloud,
   db: cloud.database(),
   now: () => new Date(),

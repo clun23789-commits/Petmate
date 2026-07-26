@@ -22,7 +22,7 @@
 | 云环境 ID | `clun23789-2gawcmo5fbb15495` |
 | 创建状态 | 已有索引已手动创建|
 | 创建日期 | 2026-05-15 |
-| 适用阶段 | 第三批：云端作品保存 / 读取闭环；第四批：支付订单与 AR 权益安全边界；第五批：广告权益云端确认链路；第六批：AI 生成任务云端适配层；第七批：优化次数云端配额闭环；第八批：分享链路真数据闭环 |
+| 适用阶段 | 第三批：云端作品保存 / 读取闭环；第四批：支付订单与 AR 权益安全边界；第五批：广告权益云端确认链路；第六批：AI 生成任务云端适配层；第七批：优化次数云端配额闭环；第八批：分享链路真数据闭环；P0-02：广告会话与次数事务结算 |
 
 说明：当前记录适用于现有 MVP 云环境。第 0 阶段新增 `development / staging / production` 环境切换后，production 上线前必须在目标生产云环境中重新核对本文件所有索引。
 
@@ -173,12 +173,12 @@
 
 ## 9. optimizeQuotaGrants 集合索引
 
-`optimizeQuotaGrants` 集合用于保存优化次数广告发放记录。
+`optimizeQuotaGrants` 集合用于保存广告结算产生的优化次数发放流水。
 
 主要用途包括：
 
-- 按幂等键防止同一次广告重复增加优化次数
-- 查询广告发放结果并返回最新配额
+- 按广告 grant 记录唯一的次数发放结果
+- 查询已经由广告结算事务写入的流水与最新配额
 - 保留 `initial_unlock` 与 `optimize_quota` 两类发放来源
 
 | 索引名称 | 索引属性 | 字段顺序 | 用途 | 状态 |
@@ -188,8 +188,8 @@
 
 ### 注意事项
 
-- `idempotencyKey` 格式为 `openid:rewardScene:clientRewardId`。
-- `idempotencyKey` 由 `grantOptimizeQuota` 云函数生成，不接受前端传入值。
+- schemaVersion 2 的 `idempotencyKey` 格式为 `openid:adGrantId`；`_id` 同样根据这两个值确定性生成。
+- 新流水只允许由 `grantAdReward` 事务创建；`grantOptimizeQuota` 是只读兼容查询。
 - 当前阶段每条发放记录的 `count` 固定为 3，不能由前端决定。
 - `quotaApplied` 用于标记该广告发放是否已经写入 `optimizeQuotas`。
 - 以上索引都是非唯一索引，不要创建为唯一索引。
@@ -294,23 +294,27 @@
 
 ## 14. adRewardGrants 集合索引
 
-`adRewardGrants` 集合用于保存激励广告完成后的试用权益发放记录。
+`adRewardGrants` 集合用于保存激励广告展示前创建的短期会话及其结算状态。
 
 主要用途包括：
 
-- 防止同一次广告权益重复发放
-- 异常恢复页按广告 ID 查询权益状态
+- 通过确定性 `_id` 防止同一广告会话重复结算
+- 异常恢复页查询 pending / granted / expired / rejected
 - 后续真实广告接入时保留云端确认记录
 
 | 索引名称 | 索引属性 | 字段顺序 | 用途 | 状态 |
 |---|---|---|---|---|
 | `idx_openid_idempotency` | 非唯一 | `openid` 升序；`idempotencyKey` 升序 | 防止同一次广告权益重复发放 | 已创建 |
 | `idx_openid_client_scene` | 非唯一 | `openid` 升序；`clientRewardId` 升序；`rewardScene` 升序 | 异常恢复页按广告 ID 查询权益状态 | 已创建 |
+| `idx_openid_scene_created` | 非唯一 | `openid` 升序；`rewardScene` 升序；`createdAt` 降序 | 后续查询广告奖励历史 | 待手动创建 |
+| `idx_openid_status_expires` | 非唯一 | `openid` 升序；`status` 升序；`expiresAt` 升序 | 后续查询当前用户未完成或过期会话 | 待手动创建 |
 
 ### 注意事项
 
 - `adRewardGrants` 集合使用字段 `openid`，不要写成 `ownerOpenid`。
 - `idempotencyKey` 格式为 `openid:rewardScene:clientRewardId`。
+- P0-02 核心创建、结算与状态查询使用确定性 `_id`，正确性不依赖以上复合索引。
+- `idx_openid_scene_created`、`idx_openid_status_expires` 只记录待办，必须由开发者在目标云环境手动创建并确认。
 - 以上索引是非唯一索引，不要创建为唯一索引。
 - Codex 只记录索引要求，开发者需要在微信云开发控制台手动创建以上索引。
 
@@ -355,5 +359,7 @@
 | `arEntitlements` | `idx_openid_work_status` | 非唯一 | `openid` 升序；`workId` 升序；`status` 升序 | 已创建 |
 | `adRewardGrants` | `idx_openid_idempotency` | 非唯一 | `openid` 升序；`idempotencyKey` 升序 | 已创建 |
 | `adRewardGrants` | `idx_openid_client_scene` | 非唯一 | `openid` 升序；`clientRewardId` 升序；`rewardScene` 升序 | 已创建 |
+| `adRewardGrants` | `idx_openid_scene_created` | 非唯一 | `openid` 升序；`rewardScene` 升序；`createdAt` 降序 | 待手动创建 |
+| `adRewardGrants` | `idx_openid_status_expires` | 非唯一 | `openid` 升序；`status` 升序；`expiresAt` 升序 | 待手动创建 |
 
 ---

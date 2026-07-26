@@ -13,7 +13,7 @@
 - [ ] 已运行 `npm run build:miniprogram`。
 - [ ] 微信开发者工具打开目录为 `miniprogram/`。
 - [ ] 云环境 ID 与 `ENV_CONFIG.cloudEnvId` 一致；该值由 `env.profiles.js` 与 `env.generated.js` 组合生成。
-- [ ] 需要测试云端链路时，24 个云函数已部署。
+- [ ] 需要测试云端链路时，26 个云函数已部署。
 - [ ] 需要测试云端链路时，数据库索引已按 `docs/cloud_database_manual_checklist.md` 核对。
 
 ## S1：首页/Tab 基础进入
@@ -29,9 +29,18 @@
 
 - [ ] 从作品首页进入开始创作。
 - [ ] 进入广告解锁页。
-- [ ] mock 广告成功后进入上传页。
+- [ ] 广告展示前已创建 `adRewardGrants.status = pending` 的 10 分钟会话；会话创建失败时不展示广告。
+- [ ] mock 广告成功后进入上传页，响应直接带回最新 quota。
 - [ ] mock 广告失败或中断时有明确提示。
-- [ ] 广告权益不重复发放。
+- [ ] 无预创建会话调用 `grantAdReward` 返回 `AD_REWARD_SESSION_NOT_FOUND`，次数不变化。
+- [ ] 同一会话重复结算 10 次、两个请求并发结算时，都只增加 3 次。
+- [ ] 结算请求伪造 `count = 999`、其他 `workId` 或其他 `source` 时，仍以会话绑定数据和固定 3 次为准。
+- [ ] `optimize_quota` 缺少作品、作品不属于当前用户或已删除时不能创建/结算会话。
+- [ ] 过期会话、未完整观看广告不能增加次数。
+- [ ] 分别模拟 `optimizeQuotaGrants`、`optimizeQuotas`、`adRewardGrants` 写失败，三个集合均无半成功记录。
+- [ ] 直接调用旧 `grantOptimizeQuota` 只返回既有结算或 `OPTIMIZE_QUOTA_GRANT_NOT_SETTLED`，`grantedCount` 不变化。
+- [ ] 异常页重复查询已结算权益 10 次，页面恢复为 granted，数据库次数和流水数量不变化。
+- [ ] 数据中只保存白名单 `completionEvidence`，不保存完整客户端广告原始对象。
 
 ## S3：上传与生成
 

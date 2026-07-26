@@ -1,7 +1,7 @@
 "use strict";
 
 const { AD_CONFIG, AD_SERVICE_MODE } = require("../../config/ad");
-const { grantAdReward, getAdRewardStatus } = require("../cloud/adReward");
+const { createAdRewardSession, grantAdReward, getAdRewardStatus } = require("../cloud/adReward");
 const { showMockRewardedVideoAd } = require("./mockRewardedVideo");
 const { showWechatRewardedVideoAd } = require("./wechatRewardedVideo");
 
@@ -58,6 +58,7 @@ async function watchRewardedAd(source, scenario = "success") {
 module.exports = {
   showRewardedAd,
   watchRewardedAd,
+  createAdRewardSession,
   grantAdReward,
   getAdRewardStatus
 };

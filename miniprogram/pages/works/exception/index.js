@@ -362,6 +362,33 @@ Page({
         return;
       }
 
+      if (result.ok && result.status === "pending") {
+        showToast("本次广告权益仍在等待确认，请稍后再试");
+        return;
+      }
+
+      if (result.ok && result.status === "expired") {
+        this.applySceneState("ad", "skipped", {
+          rewardScene: result.rewardScene || this.data.rewardScene,
+          clientRewardId: result.clientRewardId || this.data.clientRewardId,
+          source: this.data.source,
+          returnTo: this.data.returnTo
+        });
+        showToast("本次广告会话已过期，请重新观看广告");
+        return;
+      }
+
+      if (result.ok && result.status === "rejected") {
+        this.applySceneState("ad", "skipped", {
+          rewardScene: result.rewardScene || this.data.rewardScene,
+          clientRewardId: result.clientRewardId || this.data.clientRewardId,
+          source: this.data.source,
+          returnTo: this.data.returnTo
+        });
+        showToast("本次广告未完成，请重新观看广告");
+        return;
+      }
+
       showToast(result.message || "权益状态查询失败，请稍后重试");
       return;
     }
