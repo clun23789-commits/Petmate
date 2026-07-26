@@ -36,6 +36,6 @@
 
 P0-01 已在源码中完成优化次数事务化：`reserveOptimizeQuota / commitOptimizeQuota / releaseOptimizeQuota` 原子更新预占与汇总，`startGenerationTask` 原子绑定 reservation 与任务；预占记录新增 `expiresAt / boundAt / releaseReason`，并新增 `cleanupExpiredOptimizeReservations` 用于定时恢复过期记录。前端轮询网络异常不再释放次数，结果页与定向补图页具备提交锁，flow 层使用单飞保护。
 
-清理云函数源码已增加客户端调用隔离：带普通用户 `OPENID` 的请求会在数据库扫描前被拒绝；成功响应只返回汇总数字，失败日志中的用户、预占、任务和作品标识使用 12 位哈希引用。development / staging 仍需人工部署云函数、创建 `idx_status_expires`、配置每 10 分钟清理触发器，并把 `cleanupExpiredOptimizeReservations.invoke = false` 合并到各环境当前完整的 CloudBase 函数安全规则。仓库中的示例和文档不代表云端权限或触发器已经配置完成。
+清理云函数源码已增加客户端调用隔离：带普通用户 `OPENID` 的请求会在数据库扫描前被拒绝；成功响应只返回汇总数字，失败日志中的用户、预占、任务和作品标识使用 12 位哈希引用。development 已完成清理云函数、函数安全规则、`idx_status_expires` 索引和每 10 分钟定时触发器配置；staging 尚未独立部署，production 尚未部署。
 
 若后续修改产品规则，优先更新对应主事实源，并同步本文件的状态摘要或事实源归属表，避免代码版本、产品规则和设计入口出现偏差。
