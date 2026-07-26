@@ -197,10 +197,12 @@
 - `initial` 任务必须至少存在一个归属当前用户、`status = active`、`role = initial` 的上传素材；正脸、侧面、全身是推荐结构，不是强制三张上传。
 - `targeted_upload` 任务必须校验当前作品归属，并至少存在一个 `role = targeted` 的 active 上传素材。
 - `optimize` 任务必须校验当前作品归属，但不强制要求本轮新增上传素材。
+- `optimize / targeted_upload` 必须携带客户端本次提交预先生成的 `reservationId`；`startGenerationTask` 在同一事务内创建任务并写入 `optimizeReservations.taskId / boundAt`。
+- 同一 `reservationId` 最多绑定一个任务；重复提交必须返回已绑定任务，不得创建第二个 `generationTasks` 记录。
 - 不允许无素材创建初始生成任务。
 - `resultSnapshot` 必须保持对象结构，不应初始化为 `null`，避免 CloudBase 更新嵌套字段时出现 `Cannot create field xxx in element null` 错误。
 - 前端在生成完成、调用 `saveWork` 前会写入本地 `pendingCloudSave` 标记；保存失败时保留，后续启动或进入作品链路会自动重试，成功后清除。
-- 优化任务失败时，不应正式扣减优化次数；如存在预占，应释放预占次数。
+- 优化任务明确失败时不正式扣减优化次数；网络查询失败不等于任务失败，不能据此释放预占。
 
 ## optimizeQuotas
 
@@ -214,8 +216,6 @@
   grantedCount: 0,
   usedCount: 0,
   reservedCount: 0,
-  availableCount: 0, // response only, calculated by cloud function
-
   createdAt: Date,
   updatedAt: Date
 }
@@ -223,13 +223,15 @@
 
 规则：
 - `openid` 必须由云函数根据 `cloud.getWXContext()` 写入，前端传入值不能覆盖。
-- `remainingCount = Math.max(0, grantedCount - usedCount - reservedCount)`，前端展示也必须使用不小于 0 的可用次数。
+- `availableCount = grantedCount - usedCount - reservedCount`，只在响应时计算，不保存到数据库；`remainingCount` 是同值兼容别名。
+- `grantedCount / usedCount / reservedCount` 必须是非负整数，且 `usedCount + reservedCount <= grantedCount`。不变量不成立时返回 `OPTIMIZE_QUOTA_INCONSISTENT`，不能用 `Math.max` 静默修正。
 - 提交有效优化后只增加 `reservedCount`，生成成功并返回可用结果后才减少 `reservedCount` 并增加 `usedCount`。
-- 系统异常、生成失败、页面中断或结果未成功返回时，应释放预占，不增加 `usedCount`。
+- 预占、正式扣减和释放都必须使用服务端事务，同时更新 `optimizeQuotas` 与 `optimizeReservations`。
+- 生成明确失败时释放预占；网络异常或页面退出只保留预占，由重新查询或过期清理恢复，不能直接释放。
 - 细节补色不消耗重新生成类优化次数，不写入本集合扣减。
 
 规则补充：
-- 云函数响应中的可用次数字段统一使用 `availableCount = Math.max(0, grantedCount - usedCount - reservedCount)`。
+- 云函数响应中的可用次数字段统一使用 `availableCount = grantedCount - usedCount - reservedCount`；若结果小于 0，应报告数据一致性错误。
 - `remainingCount` 仅作为兼容旧前端的别名保留，值必须与 `availableCount` 完全一致。
 - 前端展示可用次数时必须做 Number 兜底，避免出现 `NaN` 或负数。
 
@@ -287,19 +289,29 @@
   status: "reserved / released / committed",
   dimensionSet: ["fur", "pattern"],
 
-  createdAt: Date,
-  updatedAt: Date,
+  expiresAt: Date,
+  boundAt: null,
+  releaseReason: "",
   releasedAt: null,
-  committedAt: null
+  committedAt: null,
+
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
 规则：
 - `openid` 必须由云函数根据 `cloud.getWXContext()` 写入。
+- `_id` 使用 `openid + reservationId` 生成的确定性文档 ID；客户端必须在一次提交开始时生成并复用 `reservationId`。
 - 预占前必须校验当前用户仍拥有该 `workId`，且作品未删除。
 - 可用次数不足时返回 `OPTIMIZE_QUOTA_NOT_ENOUGH`，前端应引导用户进入广告补充说明页，不创建本地预占。
-- `releaseOptimizeQuota` 只释放 `status === "reserved"` 的记录；已经释放或已经确认扣减的记录不能重复影响配额。
-- `commitOptimizeQuota` 只确认 `status === "reserved"` 的记录；成功后写入 `taskId`，减少预占次数并增加已用次数。
+- 状态只允许 `reserved -> released` 或 `reserved -> committed`；终态重复调用必须幂等，不再次影响配额。
+- `expiresAt` 是服务端写入的预占失效时间，当前为 15 分钟；`boundAt` 是任务原子绑定时间。
+- `taskId` 在创建优化生成任务时写入，不在 commit 时补写；一个 reservation 最多绑定一个 task。
+- `releaseReason` 只由服务端写入，可为 `task_submit_failed / task_failed / task_timeout / reservation_expired / manual_recovery`，不信任客户端内容。
+- `releaseOptimizeQuota` 只允许释放未绑定任务或任务已明确失败的 reserved 记录；`pending / running / success` 任务不能由前端提前释放。
+- `commitOptimizeQuota` 必须在事务内验证 `generationTasks.status = success`、`resultSaveStatus = success`、`finalizedWorkId` 和非空 `finalizedVersionId` 后再转换配额。
+- `cleanupExpiredOptimizeReservations` 每次最多扫描 100 条过期 reserved 记录：未绑定/失败任务释放，已成功且保存结果的任务自动 commit，超时运行任务标记失败后释放。
 
 ## adRewardGrants
 

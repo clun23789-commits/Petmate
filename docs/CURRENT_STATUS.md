@@ -1,6 +1,6 @@
 # Petmate Current Status
 
-当前源码包基线为 `petmate-mini1.5.0`。本说明用于同步 2026-05-20 的代码与文档认知边界。
+当前源码包基线为 `petmate-mini1.5.0`。本说明用于同步截至 2026-07-27 的代码与文档认知边界。
 
 当前开发仍以以下三份文档为依据：
 
@@ -33,5 +33,7 @@
 真实 AI、真实广告、真实微信支付、真实 AR 尚未接入。开发环境允许显式 mock / fallback，production 必须禁止静默 mock / local fallback。
 
 作品生成后端当前保留基础生成流程：上传素材后创建 `generationTasks`，轮询推进到云端保存 `works / workVersions`，并返回结果页所需的基础 `previewMedia` 与 `editableTexture.notes`。真实识别、真实广告、真实微信支付、真实 AR 仍未接入。
+
+P0-01 已在源码中完成优化次数事务化：`reserveOptimizeQuota / commitOptimizeQuota / releaseOptimizeQuota` 原子更新预占与汇总，`startGenerationTask` 原子绑定 reservation 与任务；预占记录新增 `expiresAt / boundAt / releaseReason`，并新增 `cleanupExpiredOptimizeReservations` 用于定时恢复过期记录。前端轮询网络异常不再释放次数，结果页与定向补图页具备提交锁，flow 层使用单飞保护。development / staging 仍需人工部署云函数、创建 `idx_status_expires` 并配置每 10 分钟清理触发器，不能把文档记录视为云端已完成操作。
 
 若后续修改产品规则，优先更新对应主事实源，并同步本文件的状态摘要或事实源归属表，避免代码版本、产品规则和设计入口出现偏差。

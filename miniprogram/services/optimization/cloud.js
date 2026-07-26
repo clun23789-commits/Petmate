@@ -57,7 +57,16 @@ function grantOptimizeQuota(payload = {}) {
 }
 
 function reserveOptimizeQuota(payload = {}) {
-  return callOptimizeFunction("reserveOptimizeQuota", payload, "OPTIMIZE_QUOTA_RESERVE_FAILED");
+  return callOptimizeFunction(
+    "reserveOptimizeQuota",
+    {
+      reservationId: payload.reservationId || "",
+      workId: payload.workId || "",
+      source: payload.source || "",
+      dimensionSet: Array.isArray(payload.dimensionSet) ? payload.dimensionSet : []
+    },
+    "OPTIMIZE_QUOTA_RESERVE_FAILED"
+  );
 }
 
 function releaseOptimizeQuota(reservationId) {

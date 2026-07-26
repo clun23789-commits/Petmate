@@ -308,6 +308,7 @@ Page({
     qualityHint: "先补充一张本轮建议角度的照片，再开始定向优化。",
     canContinue: false,
     submitLoading: false,
+    isOptimizeSubmitting: false,
     confirmTitle: "确认并发起优化",
     confirmSubtitle: "确认后先预占 1 次优化次数",
     showDevOnlyUi: experienceFlags.showDevOnlyUi,
@@ -422,14 +423,35 @@ Page({
   },
 
   async handleSubmit() {
-    if (this.data.submitLoading) {
+    if (this.data.submitLoading || this.data.isOptimizeSubmitting) {
       return;
     }
-    await submitTargetedOptimization(this.data.workId, this.data.dimension, false);
+    this.setData({
+      isOptimizeSubmitting: true
+    });
+    try {
+      await submitTargetedOptimization(this.data.workId, this.data.dimension, false);
+    } finally {
+      this.setData({
+        isOptimizeSubmitting: false
+      });
+    }
   },
 
   async handleSubmitFailure() {
-    await submitTargetedOptimization(this.data.workId, this.data.dimension, true);
+    if (this.data.submitLoading || this.data.isOptimizeSubmitting) {
+      return;
+    }
+    this.setData({
+      isOptimizeSubmitting: true
+    });
+    try {
+      await submitTargetedOptimization(this.data.workId, this.data.dimension, true);
+    } finally {
+      this.setData({
+        isOptimizeSubmitting: false
+      });
+    }
   },
 
   handleGoWorks() {

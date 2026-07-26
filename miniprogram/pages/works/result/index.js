@@ -141,6 +141,8 @@ Page({
     quotaSyncStatus: "idle",
     quotaSyncMessage: "",
     showQuotaSyncNotice: false,
+    quotaConfirmationPending: false,
+    isOptimizeSubmitting: false,
     petNameText: DEFAULT_PET_NAME,
     quotaText: "剩余 0 次优化",
     quotaEmpty: false,
@@ -163,11 +165,13 @@ Page({
     const versionId = getStringParam(options, "versionId");
     const optimizationScenario = getStringParam(options, "optimizationScenario", "success");
     const saveStatus = getStringParam(options, "saveStatus", "");
+    const quotaConfirmationPending = getStringParam(options, "quotaStatus", "") === "pending";
     const returnContext = getReturnContext(options, NAV_FROM.works);
     this.setData({
       workId,
       versionId,
       optimizationScenario,
+      quotaConfirmationPending,
       from: returnContext.from,
       returnTo: returnContext.returnTo
     });
@@ -187,7 +191,9 @@ Page({
       const cloudSaveStatus = selectCloudSaveStatus(state, workId);
       const cloudSaveMeta = buildCloudSaveMeta(cloudSaveStatus, state.workState.cloudError);
       const quotaSyncStatus = state.optimizeState.quotaSyncStatus;
-      const quotaSyncMessage = state.optimizeState.quotaError || "优化次数暂时使用本地记录，稍后会自动同步。";
+      const quotaSyncMessage = quotaConfirmationPending
+        ? "作品已生成，优化次数正在确认。请稍后刷新，本次结果不会被删除，也不会重新创建预占。"
+        : state.optimizeState.quotaError || "优化次数暂时使用本地记录，稍后会自动同步。";
       const suggestions = selectWorkSuggestions(state, workId);
 
       return {
@@ -208,7 +214,7 @@ Page({
         cloudSaveCanRetry: cloudSaveMeta.canRetry,
         quotaSyncStatus,
         quotaSyncMessage,
-        showQuotaSyncNotice: quotaSyncStatus === "failed",
+        showQuotaSyncNotice: quotaConfirmationPending || quotaSyncStatus === "failed",
         petNameText: formatPetName(work),
         quotaText: quotaEmpty ? "暂无可用优化次数" : `剩余 ${remainingCount} 次优化`,
         quotaEmpty,
@@ -380,11 +386,23 @@ Page({
   },
 
   async handleOptimize() {
+    if (this.data.isOptimizeSubmitting) {
+      return;
+    }
     if (!this.data.unlikeCount) {
       showToast("请先选择至少一个“不太像”的维度");
       return;
     }
-    await submitResultOptimization(this.data.workId, this.data.optimizationScenario === "failed");
+    this.setData({
+      isOptimizeSubmitting: true
+    });
+    try {
+      await submitResultOptimization(this.data.workId, this.data.optimizationScenario === "failed");
+    } finally {
+      this.setData({
+        isOptimizeSubmitting: false
+      });
+    }
   },
 
   handleRetouch() {

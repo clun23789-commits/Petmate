@@ -17,7 +17,18 @@ const BUSINESS_ERROR_CODES = new Set([
   "OPTIMIZE_QUOTA_COMMIT_INVALID_PAYLOAD",
   "OPTIMIZE_QUOTA_NOT_ENOUGH",
   "OPTIMIZE_QUOTA_WORK_NOT_FOUND",
-  "OPTIMIZE_RESERVATION_NOT_FOUND"
+  "OPTIMIZE_RESERVATION_NOT_FOUND",
+  "OPTIMIZE_RESERVATION_CONFLICT",
+  "OPTIMIZE_RESERVATION_ALREADY_RELEASED",
+  "OPTIMIZE_RESERVATION_TASK_ACTIVE",
+  "OPTIMIZE_RESERVATION_TASK_SUCCEEDED",
+  "OPTIMIZE_RESERVATION_EXPIRED",
+  "OPTIMIZE_RESERVATION_TASK_MISMATCH",
+  "OPTIMIZE_GENERATION_TASK_NOT_FOUND",
+  "OPTIMIZE_GENERATION_TASK_NOT_SUCCESS",
+  "OPTIMIZE_GENERATION_RESULT_NOT_SAVED",
+  "OPTIMIZE_QUOTA_INCONSISTENT",
+  "OPTIMIZE_QUOTA_TRANSACTION_FAILED"
 ]);
 
 function normalizePositiveCount(value) {
@@ -145,6 +156,22 @@ function grantOptimizeQuotaLocal(payload = {}) {
 }
 
 function reserveOptimizeQuotaLocal(payload = {}) {
+  if (!payload.reservationId || !payload.workId) {
+    throw createQuotaError("OPTIMIZE_QUOTA_RESERVE_INVALID_PAYLOAD", "优化预占信息不完整，请返回作品页重试");
+  }
+  const existingReservation = getLocalReservation(payload.reservationId);
+  if (existingReservation) {
+    if (existingReservation.workId !== payload.workId || existingReservation.source !== payload.source) {
+      throw createQuotaError("OPTIMIZE_RESERVATION_CONFLICT", "同一个预占编号对应的作品或来源不一致");
+    }
+    return {
+      reservation: existingReservation,
+      quota: getLocalQuota(),
+      duplicated: true,
+      transitionApplied: false,
+      localFallback: true
+    };
+  }
   if (selectRemainingOptimizeCount(store.getState()) <= 0) {
     throw createQuotaError("OPTIMIZE_QUOTA_NOT_ENOUGH", "当前优化次数不足，请先观看广告补充次数");
   }
@@ -154,6 +181,7 @@ function reserveOptimizeQuotaLocal(payload = {}) {
     payload.source || "result",
     Array.isArray(payload.dimensionSet) ? payload.dimensionSet : []
   );
+  reservation.reservationId = payload.reservationId;
   const quota = getLocalQuota();
 
   return {
@@ -162,6 +190,8 @@ function reserveOptimizeQuotaLocal(payload = {}) {
       ...quota,
       reservedCount: quota.reservedCount + 1
     }),
+    duplicated: false,
+    transitionApplied: true,
     localFallback: true
   };
 }

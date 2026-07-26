@@ -23,6 +23,22 @@ const TARGETED_REQUIRED_VIEW = {
     ears: "ear",
     tail: "tail"
 };
+const inFlightOptimizationMap = new Map();
+const pendingReservationIdMap = new Map();
+
+function getSubmissionKey(workId, source) {
+    return `${workId}:${source}`;
+}
+
+function getOrCreateReservationId(submissionKey) {
+    const existing = pendingReservationIdMap.get(submissionKey);
+    if (existing) {
+        return existing;
+    }
+    const reservationId = (0, id_1.createId)("reservation");
+    pendingReservationIdMap.set(submissionKey, reservationId);
+    return reservationId;
+}
 async function updateFeedback(workId, dimension, value) {
     const work = (0, index_1.selectWorkById)(createStore_1.store.getState(), workId);
     if (!work || !work.currentVersionId) {
@@ -81,7 +97,7 @@ async function updateFeedback(workId, dimension, value) {
 
     return saveCurrentWorkToCloud(updatedWork, updatedVersion);
 }
-async function reserveOptimization(workId, source) {
+async function reserveOptimization(workId, source, reservationId) {
     const work = (0, index_1.selectWorkById)(createStore_1.store.getState(), workId);
     if (!work || !work.currentVersionId) {
         return null;
@@ -109,6 +125,7 @@ async function reserveOptimization(workId, source) {
         .map(([dimension]) => dimension);
     try {
         return await (0, optimizeQuota_1.reserveOptimizationQuota)({
+            reservationId,
             workId,
             source,
             dimensionSet: dimensions
@@ -132,41 +149,67 @@ async function reserveOptimization(workId, source) {
         return null;
     }
 }
-async function submitResultOptimization(workId, simulateFailure = false) {
-    const reservation = await reserveOptimization(workId, "result");
-    if (!reservation) {
-        return;
+function runSingleFlightOptimization(workId, source, executor) {
+    const submissionKey = getSubmissionKey(workId, source);
+    const existing = inFlightOptimizationMap.get(submissionKey);
+    if (existing) {
+        return existing;
     }
-    const task = await (0, creationFlow_1.startGenerationFromUpload)({
+    const promise = Promise.resolve()
+        .then(() => executor(submissionKey))
+        .finally(() => {
+        if (inFlightOptimizationMap.get(submissionKey) === promise) {
+            inFlightOptimizationMap.delete(submissionKey);
+        }
+    });
+    inFlightOptimizationMap.set(submissionKey, promise);
+    return promise;
+}
+async function runOptimizationSubmission({ workId, source, operationType, dimension, simulateFailure, qualityMode, requiredViews }) {
+    return runSingleFlightOptimization(workId, source, async (submissionKey) => {
+        if (dimension) {
+            await updateFeedback(workId, dimension, "unlike");
+        }
+        const reservationId = getOrCreateReservationId(submissionKey);
+        const reservation = await reserveOptimization(workId, source, reservationId);
+        if (!reservation) {
+            return null;
+        }
+        const task = await (0, creationFlow_1.startGenerationFromUpload)({
+            workId,
+            operationType,
+            reservationId,
+            dimensionSet: reservation.dimensionSet,
+            simulateFailure,
+            qualityMode,
+            requiredViews
+        });
+        const latestReservation = createStore_1.store.getState().optimizeState.reservationMap[reservationId];
+        if (task || (latestReservation && latestReservation.status !== "reserved")) {
+            pendingReservationIdMap.delete(submissionKey);
+        }
+        return task;
+    });
+}
+async function submitResultOptimization(workId, simulateFailure = false) {
+    return runOptimizationSubmission({
         workId,
+        source: "result",
         operationType: "optimize",
-        reservationId: reservation.reservationId,
-        dimensionSet: reservation.dimensionSet,
         simulateFailure,
         qualityMode: "skip"
     });
-    if (!task) {
-        await (0, optimizeQuota_1.releaseOptimizationReservation)(reservation.reservationId);
-    }
 }
 async function submitTargetedOptimization(workId, dimension, simulateFailure = false) {
-    await updateFeedback(workId, dimension, "unlike");
-    const reservation = await reserveOptimization(workId, "targeted_upload");
-    if (!reservation) {
-        return;
-    }
-    const task = await (0, creationFlow_1.startGenerationFromUpload)({
+    return runOptimizationSubmission({
         workId,
+        source: "targeted_upload",
         operationType: "targeted_upload",
-        reservationId: reservation.reservationId,
-        dimensionSet: reservation.dimensionSet,
+        dimension,
         simulateFailure,
         qualityMode: "supplement",
         requiredViews: [TARGETED_REQUIRED_VIEW[dimension]]
     });
-    if (!task) {
-        await (0, optimizeQuota_1.releaseOptimizationReservation)(reservation.reservationId);
-    }
 }
 function openTargetedUpload(workId, dimension) {
     (0, navigation_1.navigate)(PAGE_ROUTES.works.targetedUpload, {

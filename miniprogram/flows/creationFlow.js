@@ -779,51 +779,20 @@ function markWorkAfterGenerationSubmitFailure(workId, operationType, failureReas
         };
     }, "generationSubmitFailed");
 }
-function markGenerationPollFailure(taskId, task, failureReason) {
-    const workId = task && task.workId ? task.workId : "";
-    const failedTask = task
-        ? {
-            ...task,
-            phase: "failed",
-            status: "failed",
-            failureReason
-        }
-        : null;
+function markGenerationQueryFailure(taskId, failureReason) {
     createStore_1.store.setState((state) => {
-        const currentWork = workId ? state.workState.workMap[workId] : null;
-        const nextStatus = currentWork && !currentWork.currentVersionId ? "failed" : currentWork === null || currentWork === void 0 ? void 0 : currentWork.status;
+        const task = state.generationState.taskMap[taskId] || null;
         return {
-            workState: currentWork
-                ? {
-                    ...state.workState,
-                    workMap: {
-                        ...state.workState.workMap,
-                        [workId]: {
-                            ...currentWork,
-                            status: nextStatus,
-                            updatedAt: new Date().toISOString()
-                        }
-                    },
-                    activeWorkStatus: state.workState.currentWorkId === workId ? nextStatus : state.workState.activeWorkStatus
-                }
-                : state.workState,
             generationState: {
                 ...state.generationState,
-                taskMap: failedTask
-                    ? {
-                        ...state.generationState.taskMap,
-                        [taskId]: failedTask
-                    }
-                    : state.generationState.taskMap,
-                currentPhase: "failed",
+                currentPhase: task && task.phase ? task.phase : state.generationState.currentPhase,
                 failureReason,
                 lastTaskSyncedAt: new Date().toISOString(),
-                lastFailureCode: task && task.failureCode ? task.failureCode : "",
-                lastFailureCategory: task && task.failureCategory ? task.failureCategory : "",
-                progress: 100
+                lastFailureCode: "GENERATION_TASK_QUERY_FAILED",
+                lastFailureCategory: "query"
             }
         };
-    }, "generationPollFailed");
+    }, "generationQueryFailed");
 }
 async function startGenerationFromUpload(params) {
     const qualityMode = params.qualityMode || (params.operationType === "initial" ? "initial" : params.operationType === "targeted_upload" ? "supplement" : "skip");
@@ -979,10 +948,7 @@ async function pollActiveGeneration(taskId, options = {}) {
     catch (error) {
         const task = createStore_1.store.getState().generationState.taskMap[taskId] || null;
         const failureReason = getErrorMessage(error, "生成任务查询失败，请稍后重试");
-        if (task && task.reservationId) {
-            await (0, optimizeQuota_1.releaseOptimizationReservation)(task.reservationId);
-        }
-        markGenerationPollFailure(taskId, task, failureReason);
+        markGenerationQueryFailure(taskId, failureReason);
         if (autoNavigateOnFailure) {
             (0, navigation_1.replace)(PAGE_ROUTES.works.exception, {
                 scene: "generation",
@@ -1043,14 +1009,18 @@ async function pollActiveGeneration(taskId, options = {}) {
         }
         return result.task;
     }
-    if (result.task.status === "success" && result.completedVersion) {
+    if (
+        result.task.status === "success" &&
+        result.task.resultSaveStatus === "success" &&
+        result.completedVersion
+    ) {
         const currentWork = createStore_1.store.getState().workState.workMap[result.task.workId];
         const localAlreadyHasVersion = currentWork && Array.isArray(currentWork.versionIds)
             ? currentWork.versionIds.includes(result.completedVersion.versionId)
             : false;
         const nextWork = resolveCompletedWorkFromGenerationResult(result, currentWork);
         if (!nextWork) {
-            markGenerationPollFailure(taskId, result.task, "GENERATION_COMPLETED_WORK_MISSING");
+            markGenerationQueryFailure(taskId, "生成结果已返回，但作品信息暂时未同步，请稍后重试");
             if (autoNavigateOnFailure) {
                 (0, navigation_1.replace)(PAGE_ROUTES.works.exception, {
                     scene: "generation",
@@ -1075,13 +1045,19 @@ async function pollActiveGeneration(taskId, options = {}) {
             saveStatus = saveResult && saveResult.ok === true ? "success" : "failed";
         }
         if (result.task.reservationId) {
-            await (0, optimizeQuota_1.commitOptimizationReservation)(result.task.reservationId, taskId);
+            const commitResult = await (0, optimizeQuota_1.commitOptimizationReservation)(result.task.reservationId, taskId);
+            if (!commitResult || commitResult.ok !== true) {
+                saveStatus = saveStatus === "failed" ? saveStatus : "quota_pending";
+                (0, toast_1.showToast)("作品已生成，优化次数正在确认，请稍后刷新");
+                await (0, optimizeQuota_1.syncOptimizeQuota)({ silent: true });
+            }
         }
         initUploadFlow("initial");
         (0, navigation_1.replace)(PAGE_ROUTES.works.result, {
             workId: nextWork.workId,
             versionId: result.completedVersion.versionId,
-            saveStatus
+            saveStatus,
+            quotaStatus: saveStatus === "quota_pending" ? "pending" : ""
         });
     }
     return result.task;

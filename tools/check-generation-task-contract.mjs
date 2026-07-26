@@ -20,7 +20,10 @@ function assertIncludes(errors, content, expected, message) {
 
 const errors = [];
 const pollGenerationTask = readProjectFile("cloudfunctions/pollGenerationTask/index.js");
-const startGenerationTask = readProjectFile("cloudfunctions/startGenerationTask/index.js");
+const startGenerationTask = [
+  readProjectFile("cloudfunctions/startGenerationTask/index.js"),
+  readProjectFile("cloudfunctions/startGenerationTask/core.js")
+].join("\n");
 const creationFlow = readProjectFile("miniprogram/flows/creationFlow.js");
 const cloudDatabaseDoc = readProjectFile("docs/cloud_database_" + "sche" + "ma.md");
 

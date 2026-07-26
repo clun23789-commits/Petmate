@@ -22,23 +22,24 @@
 | 5 | `getWork` | 作品 | `works`, `workVersions` | 只能读取当前用户作品 |
 | 6 | `deleteWork` | 作品 | `works`, `arEntitlements`, `shares` | 软删除作品并撤销或失效关联记录 |
 | 7 | `createUploadAsset` | 上传 | `uploadAssets`, `works` | 上传记录归属当前用户 |
-| 8 | `startGenerationTask` | 生成 | `generationTasks`, `works` | 创建基础作品生成任务，provider 固定为 `basic_generation` |
+| 8 | `startGenerationTask` | 生成 | `generationTasks`, `works`, `optimizeReservations` | initial 创建基础任务；优化任务与 reservation 原子绑定 |
 | 9 | `pollGenerationTask` | 生成 | `generationTasks`, `works`, `workVersions` | 轮询当前用户任务；provider 成功后幂等写入作品和版本 |
 | 10 | `grantAdReward` | 广告权益 | `adRewardGrants`, `works` | 完整广告才发放权益 |
 | 11 | `getAdRewardStatus` | 广告权益 | `adRewardGrants` | 可查询发放状态 |
 | 12 | `getOptimizeQuota` | 优化次数 | `optimizeQuotas` | 返回 availableCount/remainingCount |
 | 13 | `grantOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeQuotaGrants`, `works` | 幂等发放 3 次 |
 | 14 | `reserveOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `works` | 可用次数足够才预占 |
-| 15 | `releaseOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations` | 失败或中断可释放 |
-| 16 | `commitOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations` | 成功生成后正式扣减 |
-| 17 | `createPaymentOrder` | 支付订单 | `orders`, `works`, `arEntitlements` | 已有权益不重复下单 |
-| 18 | `getPaymentOrder` | 支付订单 | `orders` | 只能查当前用户订单 |
-| 19 | `markPaymentPaid` | 支付订单 | `orders`, `arEntitlements`, `works` | mock 支付确认后进入 paid/pending_sync |
-| 20 | `grantArEntitlement` | AR 权益 | `arEntitlements`, `orders`, `works` | paid 订单才发权益 |
-| 21 | `getArEntitlement` | AR 权益 | `arEntitlements`, `works` | deleted 作品不返回可用权益 |
-| 22 | `createShare` | 分享 | `shares`, `works`, `workVersions` | 只允许 ready/retouched 作品分享 |
-| 23 | `getShare` | 分享 | `shares`, `works` | 过期或删除作品不可预览 |
-| 24 | `expireSharesForWork` | 分享 | `shares` | 删除作品后失效 active 分享 |
+| 15 | `releaseOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 仅未绑定或明确失败任务可释放 |
+| 16 | `commitOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 成功且结果已保存后事务扣减 |
+| 17 | `cleanupExpiredOptimizeReservations` | 优化次数运维 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 定时恢复 `expiresAt` 过期预占 |
+| 18 | `createPaymentOrder` | 支付订单 | `orders`, `works`, `arEntitlements` | 已有权益不重复下单 |
+| 19 | `getPaymentOrder` | 支付订单 | `orders` | 只能查当前用户订单 |
+| 20 | `markPaymentPaid` | 支付订单 | `orders`, `arEntitlements`, `works` | mock 支付确认后进入 paid/pending_sync |
+| 21 | `grantArEntitlement` | AR 权益 | `arEntitlements`, `orders`, `works` | paid 订单才发权益 |
+| 22 | `getArEntitlement` | AR 权益 | `arEntitlements`, `works` | deleted 作品不返回可用权益 |
+| 23 | `createShare` | 分享 | `shares`, `works`, `workVersions` | 只允许 ready/retouched 作品分享 |
+| 24 | `getShare` | 分享 | `shares`, `works` | 过期或删除作品不可预览 |
+| 25 | `expireSharesForWork` | 分享 | `shares` | 删除作品后失效 active 分享 |
 
 ## 建议部署顺序
 
@@ -48,7 +49,7 @@
 - [ ] 确认 `users`、`works`、`workVersions`、`uploadAssets`、`generationTasks`、`adRewardGrants`、`optimizeQuotas`、`optimizeQuotaGrants`、`optimizeReservations`、`orders`、`arEntitlements`、`shares` 集合存在。
 - [ ] 按用户/作品基础函数部署：`syncUser`、`updateUserProfile`、`saveWork`、`listWorks`、`getWork`、`deleteWork`。
 - [ ] 部署上传/生成函数：`createUploadAsset`、`startGenerationTask`、`pollGenerationTask`。
-- [ ] 部署广告/优化次数函数：`grantAdReward`、`getAdRewardStatus`、`getOptimizeQuota`、`grantOptimizeQuota`、`reserveOptimizeQuota`、`releaseOptimizeQuota`、`commitOptimizeQuota`。
+- [ ] 部署广告/优化次数函数：`grantAdReward`、`getAdRewardStatus`、`getOptimizeQuota`、`grantOptimizeQuota`、`reserveOptimizeQuota`、`releaseOptimizeQuota`、`commitOptimizeQuota`、`cleanupExpiredOptimizeReservations`。
 - [ ] 部署支付/权益函数：`createPaymentOrder`、`getPaymentOrder`、`markPaymentPaid`、`grantArEntitlement`、`getArEntitlement`。
 - [ ] 部署分享函数：`createShare`、`getShare`、`expireSharesForWork`。
 - [ ] 使用微信开发者工具逐个上传并部署，部署方式选择云端安装依赖。
@@ -71,3 +72,13 @@
 - [ ] 部署 `pollGenerationTask` 时必须包含 `lib/phase.js`，并确认废弃生成服务目录未被重新打包。
 - [ ] 部署后用同一个成功 `taskId` 重复轮询，确认云函数幂等写入 `works / workVersions`，`cloudFinalized = true`，且不会重复创建版本或重复追加同一个 `versionId`。
 - [ ] `startGenerationTask` 与 `pollGenerationTask` 需要同批部署，避免前端收到缺少 `providerStatus / resultSaveStatus` 的旧任务协议。
+
+## P0-01 优化预占事务化部署提醒
+
+- [ ] 部署前备份 `optimizeQuotas`、`optimizeReservations`、`generationTasks`。
+- [ ] 人工审查历史 `status = reserved` 记录；缺少 `expiresAt` 的记录不能直接批量清零。根据 task 状态逐条 commit、release 或标记超时。
+- [ ] 在 development 与 staging 手动创建 `optimizeReservations.idx_status_expires`：`status` 升序、`expiresAt` 升序。仓库只记录索引要求，不代表云端已经创建。
+- [ ] 同批部署 `reserveOptimizeQuota`、`startGenerationTask`、`commitOptimizeQuota`、`releaseOptimizeQuota` 与 `cleanupExpiredOptimizeReservations`，避免新旧事务协议混用。
+- [ ] 为 `cleanupExpiredOptimizeReservations` 配置定时触发器：每 10 分钟执行一次，每批最多 100 条；该函数不在小程序 service 层暴露普通调用入口。
+- [ ] 验证 reservation 新字段：`expiresAt` 为服务端时间、`boundAt` 在任务绑定时写入、`releaseReason` 仅由服务端写入。
+- [ ] 对测试用户核对 `optimizeQuotas.reservedCount` 等于同 openid 下 `optimizeReservations.status = reserved` 的记录数。
