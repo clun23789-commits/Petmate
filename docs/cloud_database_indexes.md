@@ -205,16 +205,19 @@
 - 预占优化次数并关联当前作品
 - 生成失败时释放预占
 - 生成成功时根据 `reservationId` 确认扣减并关联 `taskId`
+- 定时扫描 `status = reserved` 且 `expiresAt` 已过期的记录；任务绑定时间记录在 `boundAt`，释放原因记录在 `releaseReason`
 
 | 索引名称 | 索引属性 | 字段顺序 | 用途 | 状态 |
 |---|---|---|---|---|
 | `idx_openid_reservation` | 非唯一 | `openid` 升序；`reservationId` 升序 | 按当前用户和预占 ID 查询单条预占记录 | 已创建 |
 | `idx_openid_work_status_updated` | 非唯一 | `openid` 升序；`workId` 升序；`status` 升序；`updatedAt` 降序 | 按作品查询预占状态，用于异常恢复和排查 | 已创建 |
+| `idx_status_expires` | 非唯一 | `status` 升序；`expiresAt` 升序 | `cleanupExpiredOptimizeReservations` 扫描过期预占 | 待在 development / staging 手动创建 |
 
 ### 注意事项
 
 - `optimizeReservations` 集合使用字段 `openid`，不要写成 `ownerOpenid`。
 - 只有 `status === "reserved"` 的记录可以影响释放或确认扣减。
+- `idx_status_expires` 不由代码自动创建；创建前先备份并人工审查缺少 `expiresAt` 的历史 reserved 记录。
 - 以上索引都是非唯一索引，不要创建为唯一索引。
 
 ---
@@ -345,6 +348,7 @@
 | `optimizeQuotaGrants` | `idx_openid_scene_created` | 非唯一 | `openid` 升序；`rewardScene` 升序；`createdAt` 降序 | 已创建 |
 | `optimizeReservations` | `idx_openid_reservation` | 非唯一 | `openid` 升序；`reservationId` 升序 | 已创建 |
 | `optimizeReservations` | `idx_openid_work_status_updated` | 非唯一 | `openid` 升序；`workId` 升序；`status` 升序；`updatedAt` 降序 | 已创建 |
+| `optimizeReservations` | `idx_status_expires` | 非唯一 | `status` 升序；`expiresAt` 升序 | 待在 development / staging 手动创建 |
 | `users` | `idx_openid` | 非唯一 | `openid` 升序 | 已创建 |
 | `orders` | `idx_openid_order` | 非唯一 | `openid` 升序；`orderId` 升序 | 已创建 |
 | `orders` | `idx_openid_work_product_status` | 非唯一 | `openid` 升序；`workId` 升序；`productType` 升序；`status` 升序 | 已创建 |

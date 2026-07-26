@@ -205,8 +205,10 @@
 
     <primary-button
       wx:if="{{showSubmitOptimizeButton}}"
-      text="提交并优化"
-      subtext="{{optimizeButtonSubtext}}"
+      text="{{isOptimizeSubmitting ? '正在提交优化' : '提交并优化'}}"
+      subtext="{{isOptimizeSubmitting ? '请稍候，不要重复点击' : optimizeButtonSubtext}}"
+      disabled="{{isOptimizeSubmitting}}"
+      loading="{{isOptimizeSubmitting}}"
       bindpress="handleOptimize"
     ></primary-button>
   </view>

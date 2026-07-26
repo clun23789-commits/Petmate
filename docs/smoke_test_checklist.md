@@ -56,9 +56,35 @@
 - [ ] 点击“像”不消耗优化次数。
 - [ ] 点击“不像”后可进入优化建议。
 - [ ] 有效优化提交才预占次数。
-- [ ] 生成失败释放预占。
-- [ ] 生成成功才正式扣减。
+- [ ] 预占记录写入 `expiresAt`；创建 optimize / targeted_upload 任务后，同一事务写入 `taskId` 与 `boundAt`。
+- [ ] 同一 `reservationId` 重复 reserve 返回 `duplicated = true`，`reservedCount` 只增加一次。
+- [ ] 最后一次额度被两个不同 reservation 并发争抢时，只允许一个成功，另一个返回 `OPTIMIZE_QUOTA_NOT_ENOUGH`。
+- [ ] 结果页和定向补图页连续快速点击时只创建一个 reservation 和一个 generationTask，按钮显示“正在提交优化”。
+- [ ] 生成明确失败后释放预占，并由服务端写入 `releaseReason = task_failed / task_timeout`。
+- [ ] 任务仍为 pending / running 时调用 release 返回 `OPTIMIZE_RESERVATION_TASK_ACTIVE`，配额与 reservation 不变化。
+- [ ] 任务成功时调用 release 返回 `OPTIMIZE_RESERVATION_TASK_SUCCEEDED`，随后由 commit 确认扣减。
+- [ ] 轮询发生网络异常时不释放 reservation；重新进入后能继续查询同一任务。
+- [ ] 生成成功、`resultSaveStatus = success` 且 `finalizedVersionId` 非空时才正式扣减；重复 commit 只影响一次。
+- [ ] commit 暂时失败时保留生成结果，结果页提示“作品已生成，优化次数正在确认”，不创建新预占。
+- [ ] 过期未绑定 reservation 经 `cleanupExpiredOptimizeReservations` 释放；过期成功任务自动 commit；超时运行任务标记失败后释放。
+- [ ] reservation 文档可见 `expiresAt / boundAt / releaseReason` 的对应状态，且 `usedCount + reservedCount <= grantedCount`。
 - [ ] 细节补色不消耗重新生成类优化次数。
+
+### S4-A：清理函数客户端攻击测试
+
+- [ ] 仅在开发版小程序中临时调用 `wx.cloud.callFunction({ name: "cleanupExpiredOptimizeReservations" })`。
+- [ ] CloudBase 客户端权限层直接拒绝调用；若控制台规则意外失效，云函数代码仍返回 `CLEANUP_OPTIMIZE_RESERVATIONS_FORBIDDEN`。
+- [ ] 拒绝发生在数据库扫描前，数据库查询次数不增加，`optimizeQuotas / optimizeReservations / generationTasks` 数据无变化。
+- [ ] 响应不包含 `OPENID / reservationId / taskId / workId` 或任何扫描结果。
+- [ ] 测试完成后删除临时代码，不得提交到产品代码。
+
+### S4-B：受信任定时清理测试
+
+- [ ] 在 development 准备一条 `status = reserved`、`expiresAt` 小于当前时间且 `taskId` 为空的测试预占。
+- [ ] 通过定时触发器或受信任管理端执行 `cleanupExpiredOptimizeReservations`。
+- [ ] reservation 变为 `released`，对应 quota 的 `reservedCount` 减少 1。
+- [ ] 响应只含 `scanned / released / committed / timedOut / skipped / failed` 汇总数字，不含明细数组。
+- [ ] 服务端日志不含原始 `openid / reservationId / taskId / workId`。
 
 ## S5：支付页与 AR 权益
 

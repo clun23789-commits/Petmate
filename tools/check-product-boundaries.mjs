@@ -119,9 +119,14 @@ try {
     "Optimization submission must require unlike feedback"
   );
   assertContains(
-    "miniprogram/flows/optimizeQuota.js",
+    "miniprogram/services/optimization/index.js",
     /reservation\.status !== "reserved"/,
-    "Optimization quota commits must be idempotent"
+    "Local optimization quota commits must remain idempotent"
+  );
+  assertContains(
+    "cloudfunctions/commitOptimizeQuota/core.js",
+    /reservation\.status === "committed"[\s\S]*duplicated:\s*true[\s\S]*transitionApplied:\s*false/,
+    "Cloud optimization quota commits must be transactionally idempotent"
   );
 
   assertNotContains(

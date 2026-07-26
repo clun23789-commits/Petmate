@@ -95,30 +95,6 @@ function applyReservationToStore(reservation, label) {
     }), label);
 }
 
-function releaseLocalReservation(reservationId) {
-    const reservation = store.getState().optimizeState.reservationMap[reservationId];
-
-    if (!reservation || reservation.status !== "reserved") {
-        return false;
-    }
-
-    store.setState((state) => ({
-        optimizeState: {
-            ...state.optimizeState,
-            reservedCount: Math.max(0, state.optimizeState.reservedCount - 1),
-            reservationMap: {
-                ...state.optimizeState.reservationMap,
-                [reservationId]: {
-                    ...reservation,
-                    status: "released"
-                }
-            }
-        }
-    }), "releaseLocalOptimizationReservation");
-
-    return true;
-}
-
 async function syncOptimizeQuota(options = {}) {
     setQuotaLoading(options.silent === true, "syncOptimizeQuotaStart");
 
@@ -203,11 +179,8 @@ async function releaseOptimizationReservation(reservationId) {
         };
     } catch (error) {
         setQuotaFailed(error, "releaseOptimizationReservationFailed");
-        const localReleased = releaseLocalReservation(reservationId);
-
         return {
             ok: false,
-            localReleased,
             error
         };
     }

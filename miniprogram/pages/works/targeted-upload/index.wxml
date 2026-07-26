@@ -129,9 +129,9 @@
         </view>
       </view>
 
-      <button class="confirm-optimize-button {{!canContinue ? 'is-disabled' : ''}}" disabled="{{!canContinue}}" bindtap="handleSubmit">
-        <text class="confirm-title">{{confirmTitle}}</text>
-        <text class="confirm-subtitle">{{confirmSubtitle}}</text>
+      <button class="confirm-optimize-button {{!canContinue || isOptimizeSubmitting ? 'is-disabled' : ''}}" disabled="{{!canContinue || isOptimizeSubmitting}}" loading="{{isOptimizeSubmitting}}" bindtap="handleSubmit">
+        <text class="confirm-title">{{isOptimizeSubmitting ? '正在提交优化' : confirmTitle}}</text>
+        <text class="confirm-subtitle">{{isOptimizeSubmitting ? '请稍候，不要重复点击' : confirmSubtitle}}</text>
       </button>
     </view>
 

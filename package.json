@@ -15,8 +15,10 @@
     "check:auth": "node ./tools/check-auth-contract.mjs",
     "check:runtime-config": "node ./tools/check-runtime-config.mjs",
     "check:generation-task": "node ./tools/check-generation-task-contract.mjs",
+    "test:optimize-quota": "node --test tests/optimize-quota/*.test.mjs",
+    "check:optimize-quota-transaction": "node ./tools/check-optimize-quota-transaction-contract.mjs",
     "check:production-readiness": "node ./tools/check-production-readiness.mjs",
-    "check": "npm run check:structure && npm run check:page-structure && npm run check:product && npm run check:mock-boundary && npm run check:auth && npm run check:runtime-config && npm run check:generation-task && npm run build:miniprogram",
+    "check": "npm run check:structure && npm run check:page-structure && npm run check:product && npm run check:mock-boundary && npm run check:auth && npm run check:runtime-config && npm run check:generation-task && npm run test:optimize-quota && npm run check:optimize-quota-transaction && npm run build:miniprogram",
     "release:precheck": "npm run check && npm run check:production-readiness"
   }
 }
