@@ -93,6 +93,7 @@ function validateQuotaGrant(quotaGrant, session, openid) {
     !quotaGrant ||
     quotaGrant.openid !== openid ||
     quotaGrant.adGrantId !== session.grantId ||
+    quotaGrant.grantId !== session.quotaGrantId ||
     quotaGrant.adRewardDocId !== session._id ||
     quotaGrant.rewardScene !== session.rewardScene ||
     normalizeString(quotaGrant.workId) !== normalizeString(session.workId) ||

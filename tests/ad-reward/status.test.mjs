@@ -113,6 +113,23 @@ test("granted ad with quotaApplied false returns AD_REWARD_INCONSISTENT", async 
   assert.equal(result.errorCode, "AD_REWARD_INCONSISTENT");
 });
 
+test("quota grant id mismatch returns AD_REWARD_INCONSISTENT", async () => {
+  const session = grantedSessionDoc();
+  const db = new FakeDatabase({
+    adRewardGrants: [session],
+    optimizeQuotaGrants: [
+      quotaGrantDoc(session, {
+        grantId: "quota-grant-mismatched"
+      })
+    ],
+    optimizeQuotas: [quotaDoc()]
+  });
+  const result = await createHandler(db)(statusPayload());
+
+  assert.equal(result.ok, false);
+  assert.equal(result.errorCode, "AD_REWARD_INCONSISTENT");
+});
+
 test("status query never changes quota or creates grant records", async () => {
   const session = grantedSessionDoc();
   const grant = quotaGrantDoc(session);
