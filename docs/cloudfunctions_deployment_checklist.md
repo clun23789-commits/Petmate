@@ -82,3 +82,33 @@
 - [ ] 为 `cleanupExpiredOptimizeReservations` 配置定时触发器：每 10 分钟执行一次，每批最多 100 条；该函数不在小程序 service 层暴露普通调用入口。
 - [ ] 验证 reservation 新字段：`expiresAt` 为服务端时间、`boundAt` 在任务绑定时写入、`releaseReason` 仅由服务端写入。
 - [ ] 对测试用户核对 `optimizeQuotas.reservedCount` 等于同 openid 下 `optimizeReservations.status = reserved` 的记录数。
+
+## cleanupExpiredOptimizeReservations 安全部署
+
+`docs/cloud_function_security_rules.example.json` 仅是人工配置参考，不会自动部署到 CloudBase。函数代码部署不会自动完成安全规则配置。部署人员必须把专用函数条目合并到环境当前完整规则，保留并核对现有 `*` 通配规则，不得用示例文件覆盖控制台中的其他函数权限。
+
+需要人工合并的参考结构：
+
+```json
+{
+  "*": {
+    "invoke": "auth != null"
+  },
+  "cleanupExpiredOptimizeReservations": {
+    "invoke": false
+  }
+}
+```
+
+其中 `*` 的内容必须以目标环境当前真实配置为准；具体函数名配置优先于通配配置。
+
+- [ ] 部署更新后的 `cleanupExpiredOptimizeReservations` 云函数代码。
+- [ ] 部署或更新每 10 分钟执行一次的定时触发器。
+- [ ] 打开 CloudBase 控制台，进入“云函数 → 权限控制”。
+- [ ] 将 `"cleanupExpiredOptimizeReservations": { "invoke": false }` 合并到环境现有完整安全规则并保存。
+- [ ] 从开发版小程序调用该函数，确认客户端权限层拒绝、数据库查询次数不增加且数据无变化。
+- [ ] 从定时触发器或受信任管理端执行，确认清理仍可正常扫描、释放或提交。
+- [ ] 确认成功响应只含 `scanned / released / committed / timedOut / skipped / failed` 汇总数字。
+- [ ] 确认服务端日志只含哈希引用，不含原始 `openid / reservationId / taskId / workId`。
+- [ ] development 验证完成后，在 staging 环境重复合并规则、部署触发器和执行验证。
+- [ ] production 环境建立后重复相同步骤；未实际完成前不得标记为已配置。

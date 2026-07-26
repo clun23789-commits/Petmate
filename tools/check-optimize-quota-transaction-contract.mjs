@@ -116,6 +116,74 @@ for (const relativePath of [
   }
 }
 
+requirePattern(
+  "cloudfunctions/cleanupExpiredOptimizeReservations/index.js",
+  /getInvocationContext:\s*\(\)\s*=>\s*cloud\.getWXContext\(\)/,
+  "must inject the trusted cloud invocation context reader"
+);
+requirePattern(
+  "cloudfunctions/cleanupExpiredOptimizeReservations/core.js",
+  /CLEANUP_OPTIMIZE_RESERVATIONS_FORBIDDEN/,
+  "must reject client invocations with a dedicated forbidden error"
+);
+
+const cleanupCore = read("cloudfunctions/cleanupExpiredOptimizeReservations/core.js");
+const cleanupHandlerStart = cleanupCore.indexOf("return async function cleanupExpiredOptimizeReservations");
+const cleanupPermissionCheck = cleanupCore.indexOf("if (isClientInvocation(invocationContext))", cleanupHandlerStart);
+const cleanupFirstCollectionAccess = cleanupCore.indexOf("db.collection(", cleanupHandlerStart);
+if (
+  cleanupHandlerStart < 0 ||
+  cleanupPermissionCheck < cleanupHandlerStart ||
+  cleanupFirstCollectionAccess < 0 ||
+  cleanupPermissionCheck > cleanupFirstCollectionAccess
+) {
+  failures.push(
+    "cloudfunctions/cleanupExpiredOptimizeReservations/core.js: client invocation check must run before the first database collection access"
+  );
+}
+rejectPattern(
+  "cloudfunctions/cleanupExpiredOptimizeReservations/core.js",
+  /\bresults\s*:\s*\[/,
+  "cleanup response must not include record-level results"
+);
+rejectPattern(
+  "cloudfunctions/cleanupExpiredOptimizeReservations/core.js",
+  /summary\.results(?:\.push)?/,
+  "cleanup must not accumulate record-level response details"
+);
+requirePattern(
+  "cloudfunctions/cleanupExpiredOptimizeReservations/core.js",
+  /userRef:\s*hashIdentifier\(openid\)[\s\S]*reservationRef:\s*hashIdentifier\(reservationId\)[\s\S]*taskRef:\s*hashIdentifier\(taskId\)[\s\S]*workRef:\s*hashIdentifier\(workId\)/,
+  "cleanup failure logs must contain hashed references only"
+);
+
+const securityRulesPath = "docs/cloud_function_security_rules.example.json";
+if (!fs.existsSync(path.join(repoRoot, securityRulesPath))) {
+  failures.push(`${securityRulesPath}: security rules reference file is missing`);
+} else {
+  try {
+    const securityRules = JSON.parse(read(securityRulesPath));
+    if (!securityRules["*"]) {
+      failures.push(`${securityRulesPath}: environment security rules must retain a wildcard entry`);
+    }
+    if (securityRules.cleanupExpiredOptimizeReservations?.invoke !== false) {
+      failures.push(`${securityRulesPath}: cleanupExpiredOptimizeReservations.invoke must be false`);
+    }
+  } catch (error) {
+    failures.push(`${securityRulesPath}: must contain valid JSON (${error.message})`);
+  }
+}
+requirePattern(
+  "docs/cloudfunctions_deployment_checklist.md",
+  /函数代码部署不会自动完成安全规则配置/,
+  "must state that CloudBase function security rules require manual configuration"
+);
+requirePattern(
+  "docs/cloudfunctions_deployment_checklist.md",
+  /cleanupExpiredOptimizeReservations[\s\S]*"invoke":\s*false/,
+  "must document the client invocation deny rule"
+);
+
 function readConstant(relativePath, constantName) {
   const match = read(relativePath).match(new RegExp(`const\\s+${constantName}\\s*=\\s*(\\d+)\\s*\\*\\s*60\\s*\\*\\s*1000`));
   return match ? Number(match[1]) : null;

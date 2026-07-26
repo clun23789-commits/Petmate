@@ -1,0 +1,8 @@
+{
+  "*": {
+    "invoke": "auth != null"
+  },
+  "cleanupExpiredOptimizeReservations": {
+    "invoke": false
+  }
+}

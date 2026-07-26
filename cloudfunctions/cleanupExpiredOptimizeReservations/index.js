@@ -8,5 +8,6 @@ cloud.init({
 });
 
 exports.main = createCleanupExpiredOptimizeReservationsHandler({
-  db: cloud.database()
+  db: cloud.database(),
+  getInvocationContext: () => cloud.getWXContext()
 });

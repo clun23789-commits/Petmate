@@ -1,5 +1,7 @@
 "use strict";
 
+const crypto = require("crypto");
+
 const RESERVATION_TTL_MS = 15 * 60 * 1000;
 const GENERATION_TASK_TIMEOUT_MS = 10 * 60 * 1000;
 const DEFAULT_BATCH_LIMIT = 100;
@@ -16,6 +18,35 @@ class BusinessError extends Error {
 
 function normalizeString(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function hashIdentifier(value) {
+  const normalized = normalizeString(value);
+  if (!normalized) {
+    return "";
+  }
+  return crypto
+    .createHash("sha256")
+    .update(normalized)
+    .digest("hex")
+    .slice(0, 12);
+}
+
+function isClientInvocation(context) {
+  return Boolean(
+    context &&
+    typeof context.OPENID === "string" &&
+    context.OPENID.trim()
+  );
+}
+
+function createForbiddenResponse() {
+  return {
+    ok: false,
+    errorCode: "CLEANUP_OPTIMIZE_RESERVATIONS_FORBIDDEN",
+    status: "forbidden",
+    message: "当前调用方式无权执行系统清理任务"
+  };
 }
 
 function normalizeDate(value) {
@@ -114,12 +145,26 @@ function buildTimeoutPatch(scanNow) {
   };
 }
 
-function createCleanupExpiredOptimizeReservationsHandler({ db, now = () => new Date(), logger = console }) {
+function createCleanupExpiredOptimizeReservationsHandler({
+  db,
+  getInvocationContext = () => ({}),
+  now = () => new Date(),
+  logger = console
+}) {
   if (RESERVATION_TTL_MS < GENERATION_TASK_TIMEOUT_MS) {
     throw new Error("RESERVATION_TTL_MS must not be shorter than GENERATION_TASK_TIMEOUT_MS");
   }
 
   return async function cleanupExpiredOptimizeReservations(event = {}) {
+    const invocationContext = getInvocationContext() || {};
+    if (isClientInvocation(invocationContext)) {
+      logger.warn("cleanupExpiredOptimizeReservations forbidden client invocation", {
+        functionName: "cleanupExpiredOptimizeReservations",
+        errorCode: "CLEANUP_OPTIMIZE_RESERVATIONS_FORBIDDEN"
+      });
+      return createForbiddenResponse();
+    }
+
     const scanNow = now();
     const limit = getBatchLimit(event);
     const expiredResult = await db.collection("optimizeReservations").where({
@@ -133,8 +178,7 @@ function createCleanupExpiredOptimizeReservationsHandler({ db, now = () => new D
       committed: 0,
       timedOut: 0,
       skipped: 0,
-      failed: 0,
-      results: []
+      failed: 0
     };
 
     for (const seed of expiredReservations) {
@@ -279,27 +323,14 @@ function createCleanupExpiredOptimizeReservationsHandler({ db, now = () => new D
         if (item.timedOut) {
           summary.timedOut += 1;
         }
-        summary.results.push({
-          reservationId,
-          taskId,
-          workId,
-          ...item
-        });
       } catch (error) {
         summary.failed += 1;
-        summary.results.push({
-          reservationId,
-          taskId,
-          workId,
-          action: "failed",
-          errorCode: error && error.errorCode ? error.errorCode : "OPTIMIZE_QUOTA_TRANSACTION_FAILED"
-        });
         logger.error("cleanupExpiredOptimizeReservations item failed", {
           functionName: "cleanupExpiredOptimizeReservations",
-          openid: openid ? createSafeDocId("user", openid).slice(-12) : "",
-          reservationId,
-          taskId,
-          workId,
+          userRef: hashIdentifier(openid),
+          reservationRef: hashIdentifier(reservationId),
+          taskRef: hashIdentifier(taskId),
+          workRef: hashIdentifier(workId),
           errorCode: error && error.errorCode ? error.errorCode : "OPTIMIZE_QUOTA_TRANSACTION_FAILED",
           message: error && error.message ? error.message : String(error)
         });
@@ -320,10 +351,13 @@ module.exports = {
   MAX_BATCH_LIMIT,
   RESERVATION_TTL_MS,
   buildTimeoutPatch,
+  createForbiddenResponse,
   createCleanupExpiredOptimizeReservationsHandler,
   createSafeDocId,
   getQuotaDocId,
   getReservationDocId,
+  hashIdentifier,
+  isClientInvocation,
   isTaskTimedOut,
   validateQuota,
   verifyTaskLink
