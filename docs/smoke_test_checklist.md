@@ -98,8 +98,15 @@
 ## S5：支付页与 AR 权益
 
 - [ ] 未解锁作品进入 AR guide 后进入支付页。
+- [ ] development 本地 Mock 支付仍可完成页面演示。
+- [ ] staging 云端 Mock 订单明确写入 `paymentProvider=mock / paymentMode=mock`，确认后来源为 `trusted_mock_flow`。
 - [ ] mock 支付成功后发放当前 workId 的 AR 权益。
 - [ ] mock 支付成功后先停留支付页展示“支付成功 / 权益到账”，点击主按钮后再进入 AR 展示。
+- [ ] 缺少 `PETMATE_APP_ENV` 时支付云函数返回 `SERVER_ENV_INVALID`，不会默认按 development 放行。
+- [ ] production 创建或确认 Mock 订单均被拒绝；真实支付未实现时显示明确不可用状态。
+- [ ] real/wechat 订单不能调用 `markPaymentPaid`，`wx.requestPayment` 成功回调不会直接把订单标记为 paid。
+- [ ] 旧 paid 订单缺少可信 `paymentConfirmationSource` 时不能发放权益。
+- [ ] 重复或并发发放同一作品权益后只存在一个 active 权益，订单与权益状态一致。
 - [ ] 已解锁当前作品可再次进入 AR。
 - [ ] 不同作品权益不互通。
 - [ ] AR 初始化失败后权益保留，不引导重复支付。

@@ -19,8 +19,9 @@
     "check:optimize-quota-transaction": "node ./tools/check-optimize-quota-transaction-contract.mjs",
     "test:ad-reward": "node --test tests/ad-reward/*.test.mjs",
     "check:ad-reward-settlement": "node ./tools/check-ad-reward-settlement-contract.mjs",
+    "test:payment-security": "node --test tests/payment/*.test.mjs",
     "check:production-readiness": "node ./tools/check-production-readiness.mjs",
-    "check": "npm run check:structure && npm run check:page-structure && npm run check:product && npm run check:mock-boundary && npm run check:auth && npm run check:runtime-config && npm run check:generation-task && npm run test:optimize-quota && npm run check:optimize-quota-transaction && npm run test:ad-reward && npm run check:ad-reward-settlement && npm run build:miniprogram",
+    "check": "npm run check:structure && npm run check:page-structure && npm run check:product && npm run check:mock-boundary && npm run check:auth && npm run check:runtime-config && npm run check:generation-task && npm run test:optimize-quota && npm run check:optimize-quota-transaction && npm run test:ad-reward && npm run check:ad-reward-settlement && npm run test:payment-security && npm run build:miniprogram",
     "release:precheck": "npm run check && npm run check:production-readiness"
   }
 }

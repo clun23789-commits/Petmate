@@ -371,7 +371,7 @@
 
 ## orders
 
-保存当前作品 AR 解锁订单。当前 MVP 仍为 mock 支付参数，不接入真实微信支付。
+保存当前作品 AR 解锁订单。development/staging 可由云函数创建明确的 Mock 订单；production 禁止 Mock，真实微信支付仍未接入。
 
 ```js
 {
@@ -389,15 +389,14 @@
   entitlementStatus: "none / pending_sync / active",
   entitlementId: "",
 
-  paymentProvider: "wechat",
-  paymentMode: "mock",
+  paymentProvider: "mock / wechat",
+  paymentMode: "mock / real",
+  paymentConfirmationSource: "trusted_mock_flow / wechat_server_notification / 空字符串",
+  providerTransactionId: "",
+  providerConfirmedAt: null,
+  providerPayloadDigest: "",
   paymentParams: {
-    mode: "mock",
-    timeStamp: "",
-    nonceStr: "",
-    package: "",
-    signType: "RSA",
-    paySign: ""
+    mode: "mock"
   },
 
   workSnapshot: {
@@ -413,6 +412,14 @@
   failedAt: Date
 }
 ```
+
+订单支付安全规则：
+
+- `createPaymentOrder / markPaymentPaid / grantArEntitlement` 只读取云函数环境变量 `PETMATE_APP_ENV`，不信任客户端环境字段；缺失或无效时默认拒绝。
+- Mock 订单必须同时满足 `paymentMode = mock`、`paymentProvider = mock`；确认成功后写入 `paymentConfirmationSource = trusted_mock_flow`，交易号保持空字符串。
+- production 禁止创建和确认 Mock 订单。
+- real/wechat 订单只能由未来的微信支付服务端通知写入 `wechat_server_notification`、非空交易号和确认时间；当前实现明确拒绝发放，不把客户端支付回调当成可信结果。
+- 商品金额和币种固定由服务端校验为 `9.9 CNY`，客户端传入值不能覆盖。
 
 规则：
 
@@ -452,9 +459,10 @@
 规则：
 
 - `openid` 和 `ownerOpenid` 必须由云函数根据 `cloud.getWXContext()` 写入，前端传入值不能覆盖。
-- `grantArEntitlement` 只能基于当前用户、当前作品、`status === "paid"` 的 AR 解锁订单发放权益。
+- `grantArEntitlement` 只能基于当前用户、当前作品、`status/paymentStatus === "paid"` 且支付确认来源可信的 AR 解锁订单发放权益。
 - 查询和发放权益前必须确认作品仍属于当前用户，且作品状态为 `ready` 或 `retouched`。
-- 同一用户同一作品只允许存在一个 active AR 权益；重复发放应返回已有权益。
+- 同一用户同一作品使用确定性权益 `_id`，只允许存在一个 active AR 权益；重复或并发发放应返回同一权益。
+- 权益写入与订单 `entitlementStatus / entitlementId` 更新必须在同一数据库事务中完成。
 - 删除作品时，当前作品的 active AR 权益应更新为 `revoked`，并记录 `revokedAt` 和 `revokeReason = "work_deleted"`。
 - 即使历史权益记录仍存在，只要作品已删除或状态不可用，`getArEntitlement` 不应返回可使用权益。
 

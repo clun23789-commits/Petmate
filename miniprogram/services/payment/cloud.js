@@ -1,5 +1,7 @@
 "use strict";
 
+const { isProductionLikeEnv } = require("../runtime");
+
 function assertCloudReady() {
   if (typeof wx === "undefined" || !wx.cloud || typeof wx.cloud.callFunction !== "function") {
     throw new Error("微信云开发能力不可用，请先确认 app.js 已初始化 wx.cloud");
@@ -42,14 +44,34 @@ function requestWechatPayment(paymentParams = {}) {
 
   return new Promise((resolve, reject) => {
     wx.requestPayment({
-      timeStamp: paymentParams.timeStamp || "",
-      nonceStr: paymentParams.nonceStr || "",
-      package: paymentParams.package || "",
-      signType: paymentParams.signType || "RSA",
-      paySign: paymentParams.paySign || "",
+      timeStamp: paymentParams.timeStamp,
+      nonceStr: paymentParams.nonceStr,
+      package: paymentParams.package,
+      signType: paymentParams.signType,
+      paySign: paymentParams.paySign,
       success: resolve,
       fail: reject
     });
+  });
+}
+
+function paymentFailure(errorCode, status, message) {
+  return {
+    ok: false,
+    status,
+    errorCode,
+    reason: errorCode.toLowerCase(),
+    message
+  };
+}
+
+function hasValidWechatPaymentParams(paymentParams) {
+  if (!paymentParams || typeof paymentParams !== "object" || Array.isArray(paymentParams)) {
+    return false;
+  }
+
+  return ["timeStamp", "nonceStr", "package", "signType", "paySign"].every((field) => {
+    return typeof paymentParams[field] === "string" && paymentParams[field].trim();
   });
 }
 
@@ -58,17 +80,29 @@ async function createPaymentOrder(params = {}) {
 }
 
 async function requestPayment(params = {}) {
-  const paymentParams = params.paymentParams || {};
+  const paymentParams = params.paymentParams;
 
-  if (!paymentParams || paymentParams.mode === "mock") {
+  if (!paymentParams || typeof paymentParams !== "object" || Array.isArray(paymentParams)) {
+    return paymentFailure("PAYMENT_PARAMS_MISSING", "failed", "支付参数缺失，请重新发起支付。");
+  }
+
+  if (paymentParams.mode === "mock") {
+    if (isProductionLikeEnv()) {
+      return paymentFailure("MOCK_PAYMENT_NOT_ALLOWED", "failed", "当前环境不允许使用 Mock 支付。");
+    }
     return {
       ok: true,
       status: "success",
       orderId: params.orderId || "",
+      paymentMode: "mock",
       raw: {
         mock: true
       }
     };
+  }
+
+  if ((paymentParams.mode && paymentParams.mode !== "real") || !hasValidWechatPaymentParams(paymentParams)) {
+    return paymentFailure("PAYMENT_PARAMS_INVALID", "failed", "微信支付参数不完整，请重新发起支付。");
   }
 
   try {
@@ -77,6 +111,7 @@ async function requestPayment(params = {}) {
       ok: true,
       status: "success",
       orderId: params.orderId || "",
+      paymentMode: "real",
       raw
     };
   } catch (error) {
@@ -110,6 +145,7 @@ async function getPaymentOrder(params = {}) {
 
 module.exports = {
   createPaymentOrder,
+  hasValidWechatPaymentParams,
   requestPayment,
   markPaymentPaid,
   getPaymentOrder

@@ -33,10 +33,10 @@
 | 16 | `releaseOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 仅未绑定或明确失败任务可释放 |
 | 17 | `commitOptimizeQuota` | 优化次数 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 成功且结果已保存后事务扣减 |
 | 18 | `cleanupExpiredOptimizeReservations` | 优化次数运维 | `optimizeQuotas`, `optimizeReservations`, `generationTasks` | 定时恢复 `expiresAt` 过期预占 |
-| 19 | `createPaymentOrder` | 支付订单 | `orders`, `works`, `arEntitlements` | 已有权益不重复下单 |
+| 19 | `createPaymentOrder` | 支付订单 | `orders`, `works`, `arEntitlements` | 非 production 只创建明确 Mock 订单，production 在真实支付未接入时拒绝 |
 | 20 | `getPaymentOrder` | 支付订单 | `orders` | 只能查当前用户订单 |
-| 21 | `markPaymentPaid` | 支付订单 | `orders`, `arEntitlements`, `works` | mock 支付确认后进入 paid/pending_sync |
-| 22 | `grantArEntitlement` | AR 权益 | `arEntitlements`, `orders`, `works` | paid 订单才发权益 |
+| 21 | `markPaymentPaid` | 支付订单 | `orders`, `works` | 仅可信 Mock 订单可进入 paid/pending_sync，production 禁止 |
+| 22 | `grantArEntitlement` | AR 权益 | `arEntitlements`, `orders`, `works` | 支付来源可信才发权益，权益与订单在同一事务更新 |
 | 23 | `getArEntitlement` | AR 权益 | `arEntitlements`, `works` | deleted 作品不返回可用权益 |
 | 24 | `createShare` | 分享 | `shares`, `works`, `workVersions` | 只允许 ready/retouched 作品分享 |
 | 25 | `getShare` | 分享 | `shares`, `works` | 过期或删除作品不可预览 |
@@ -53,6 +53,9 @@
 - [ ] 严格按顺序部署广告结算函数：`createAdRewardSession`、`grantAdReward`、`getAdRewardStatus`、`grantOptimizeQuota`。
 - [ ] 部署优化次数函数：`getOptimizeQuota`、`reserveOptimizeQuota`、`releaseOptimizeQuota`、`commitOptimizeQuota`、`cleanupExpiredOptimizeReservations`。
 - [ ] 部署支付/权益函数：`createPaymentOrder`、`getPaymentOrder`、`markPaymentPaid`、`grantArEntitlement`、`getArEntitlement`。
+- [ ] 在 `createPaymentOrder`、`markPaymentPaid`、`grantArEntitlement` 分别配置服务端 `PETMATE_APP_ENV`；development/staging/production 必须与目标云环境一致，缺失时支付会默认拒绝。
+- [ ] staging 同批部署三个支付核心函数后再验证 Mock 订单；不得只部署客户端或其中一个函数，避免新旧协议混用。
+- [ ] production 当前不得开放支付入口：Mock 会被拒绝，真实微信支付下单和 `wechat_server_notification` 尚未实现。
 - [ ] 部署分享函数：`createShare`、`getShare`、`expireSharesForWork`。
 - [ ] 使用微信开发者工具逐个上传并部署，部署方式选择云端安装依赖。
 - [ ] 对照 `docs/cloud_database_manual_checklist.md` 人工核对索引。
@@ -69,6 +72,17 @@
 - 云函数返回格式不符合 `{ ok, data, message }` 或 `{ ok, data }`。
 - 用户归属字段混用：`users`、`orders`、`optimize*`、`adRewardGrants` 使用 `openid`；`works`、`workVersions`、`uploadAssets`、`shares`、`generationTasks` 使用 `ownerOpenid`。
 - 本地默认 development 允许 fallback，但 production 配置不得依赖静默 mock 或 local fallback。
+
+## P0 支付安全隔离部署提醒
+
+- [ ] 部署前运行 `npm run test:payment-security`、`npm run check:production-readiness` 和 `npm run check`。
+- [ ] `check:production-readiness` 当前应因真实微信支付未实现而非零退出；这是预期发布阻塞，不能通过改回 Mock 绕过。
+- [ ] staging 新订单核对 `paymentProvider=mock`、`paymentMode=mock`、`paymentConfirmationSource=""`。
+- [ ] staging Mock 确认后核对 `paymentConfirmationSource=trusted_mock_flow`、`providerTransactionId=""`、`providerConfirmedAt` 为服务端时间。
+- [ ] 重复调用 `markPaymentPaid` 返回同一 paid 订单；旧 paid 订单若缺少可信来源必须被拒绝。
+- [ ] 重复和并发调用 `grantArEntitlement` 只保留一个 active 权益，并且订单同步为 `entitlementStatus=active`。
+- [ ] production 以 Mock 参数调用三个支付函数均应被拒绝；不要配置或提交商户密钥、证书或任何 Secret。
+
 ## 基础作品生成部署提醒
 
 - [ ] 部署 `pollGenerationTask` 时必须包含 `lib/phase.js`，并确认废弃生成服务目录未被重新打包。

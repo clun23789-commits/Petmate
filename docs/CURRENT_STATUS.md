@@ -42,4 +42,6 @@ P0-02 已在源码中完成广告奖励可信结算链路：前端在展示广�
 
 广告完成证据仍来自微信客户端关闭回调，只能记录为 `client_reported / client_confirmed`，不等于服务端或密码学验证。真实广告位 ID 仍为空，production 仍未启用；完整边界见 `docs/ad_reward_security_boundary.md`。
 
+P0 支付安全隔离已在源码中完成：支付云函数只从服务端 `PETMATE_APP_ENV` 判断环境；development/staging 只允许明确的 Mock 订单，`markPaymentPaid` 不能处理 real/wechat 订单；AR 权益必须基于 `trusted_mock_flow` 可信来源并与订单更新在同一事务完成。production 会拒绝 Mock，下单与真实微信支付服务端通知仍未接入，因此 production readiness 持续明确阻断。
+
 若后续修改产品规则，优先更新对应主事实源，并同步本文件的状态摘要或事实源归属表，避免代码版本、产品规则和设计入口出现偏差。

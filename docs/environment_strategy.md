@@ -18,6 +18,20 @@
 
 不要在这些文件中写入密钥、支付证书、商户私钥、AI API key 或真实广告位等敏感信息。
 
+支付相关云函数另有一项服务端必填环境变量：
+
+```text
+PETMATE_APP_ENV=development|staging|production
+```
+
+必须在 `createPaymentOrder`、`markPaymentPaid`、`grantArEntitlement` 的云函数运行环境中配置。云函数不读取、也不信任客户端请求中的 `appEnv / environment / isProduction / paymentMode` 来判断部署环境。变量缺失或值不在上述三项中时，支付链路以 `SERVER_ENV_INVALID` 默认拒绝。
+
+| `PETMATE_APP_ENV` | 云端支付行为 |
+|---|---|
+| `development` | 允许明确标记为 `paymentProvider=mock / paymentMode=mock` 的 Mock 订单 |
+| `staging` | 允许云端 Mock 订单和可信 Mock 确认，用于端到端验收 |
+| `production` | 禁止创建或确认 Mock 订单；真实支付未接入时返回明确不可用错误 |
+
 ## 3. 环境定义
 
 | 环境 | 用途 | 是否允许 mock | 是否允许 fallback | 是否可发布 |
@@ -64,7 +78,7 @@ npm.cmd run env:production
 | `upload` | cloud with mock dev fallback | cloud | cloud |
 | `generation` | cloud with mock dev fallback | cloud | cloud |
 | `optimization` | cloud with local fallback | cloud | cloud |
-| `payment` | mock | mock | real |
+| `payment` | mock | cloud（仅明确 Mock 订单） | real（尚未实现） |
 | `ar` | mock | mock | real |
 | `share` | cloud with mock fallback | cloud with mock fallback | cloud |
 | `user` | cloud with local fallback | cloud | cloud |
@@ -84,7 +98,7 @@ production 配置严格不等于 production 已就绪。当前真实 AR、catalo
 - `production.catalog` 配置为 cloud，但 catalog service 非 mock 分支仍返回 `CATALOG_SERVICE_UNAVAILABLE`。
 - `production.help` 配置为 cloud，但 help service 非 mock 分支仍返回 `HELP_SERVICE_UNAVAILABLE`。
 - `production.ad` 配置为 real，但 `rewardedVideoAdUnitId` 仍为空。
-- `production.payment` 配置为 real，但 `createPaymentOrder` 仍返回 mock payment params。
+- `production.payment` 配置为 real，但真实微信支付下单和服务端支付通知确认尚未实现；云函数会拒绝创建 Mock 订单，客户端也不会在 `wx.requestPayment` 成功后自行标记订单为 paid。
 
 这类失败是第 0 阶段的目标结果，表示项目不会在真实能力缺口尚未补齐时被误发布为 production。
 
@@ -99,6 +113,8 @@ npm run release:precheck
 该命令会先运行普通工程检查，再运行 production readiness。当前阶段整体应失败，失败原因必须来自 production 真实服务缺口。
 
 不要为了让 readiness 通过而把 production 改成 `mock` 或 fallback。`tools/check-runtime-config.mjs` 和 `tools/check-production-readiness.mjs` 都会检查 production 服务矩阵。
+
+支付上线前还必须确认三个支付相关云函数的 `PETMATE_APP_ENV=production` 已配置，并以微信支付服务端通知作为唯一真实支付确认来源。当前代码保留 `wechat_server_notification` 协议名但明确返回 `REAL_PAYMENT_CONFIRMATION_NOT_IMPLEMENTED`，不能通过伪造字段绕过。
 
 ## 8. 回滚到开发环境
 
