@@ -22,8 +22,8 @@
 | 5 | `getWork` | 作品 | `works`, `workVersions` | 只能读取当前用户作品 |
 | 6 | `deleteWork` | 作品 | `works`, `arEntitlements`, `shares` | 软删除作品并撤销或失效关联记录 |
 | 7 | `createUploadAsset` | 上传 | `uploadAssets`, `works` | 上传记录归属当前用户 |
-| 8 | `startGenerationTask` | 生成 | `generationTasks`, `works`, `optimizeReservations` | initial 创建基础任务；优化任务与 reservation 原子绑定 |
-| 9 | `pollGenerationTask` | 生成 | `generationTasks`, `works`, `workVersions` | 轮询当前用户任务；provider 成功后幂等写入作品和版本 |
+| 8 | `startGenerationTask` | 生成 | `generationTasks`, `works`, `uploadAssets`, `optimizeReservations` | 使用 `clientRequestId` 确定性创建任务；优化任务与 reservation 原子绑定 |
+| 9 | `pollGenerationTask` | 生成 | `generationTasks`, `uploadAssets`, `works`, `workVersions` | 处理锁保护阶段推进；原子写入作品、版本和任务终态 |
 | 10 | `createAdRewardSession` | 广告权益 | `adRewardGrants`, `works` | 广告展示前创建 10 分钟 pending 会话并绑定场景/作品 |
 | 11 | `grantAdReward` | 广告权益/优化次数 | `adRewardGrants`, `optimizeQuotaGrants`, `optimizeQuotas`, `works` | 单事务结算并固定增加 3 次 |
 | 12 | `getAdRewardStatus` | 广告权益 | `adRewardGrants`, `optimizeQuotaGrants`, `optimizeQuotas` | 只在完整结算后返回 granted 与 quota |
@@ -87,6 +87,10 @@
 
 - [ ] 部署 `pollGenerationTask` 时必须包含 `lib/phase.js`，并确认废弃生成服务目录未被重新打包。
 - [ ] 部署后用同一个成功 `taskId` 重复轮询，确认云函数幂等写入 `works / workVersions`，`cloudFinalized = true`，且不会重复创建版本或重复追加同一个 `versionId`。
+- [ ] 使用同一 `clientRequestId` 重复和并发调用 `startGenerationTask`，确认只创建一个任务并返回 `duplicated = true`。
+- [ ] 并发轮询同一任务，确认只有一个请求获得处理锁；构造过期锁后可恢复，旧 token/revision 无法覆盖新状态。
+- [ ] 在测试环境分别注入版本、作品写入失败，确认 `works / workVersions / generationTasks` 最终成功状态整体回滚。
+- [ ] 部署新版小程序后验证 `petmate.generationRequests.v1` 只保存请求引用，任务成功或明确失败后会清理。
 - [ ] `startGenerationTask` 与 `pollGenerationTask` 需要同批部署，避免前端收到缺少 `providerStatus / resultSaveStatus` 的旧任务协议。
 
 ## P0-01 优化预占事务化部署提醒

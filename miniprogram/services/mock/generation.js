@@ -7,6 +7,7 @@ const generation_phases_1 = require("../../mocks/fixtures/generation-phases");
 const createStore_1 = require("../../store/core/createStore");
 const id_1 = require("../../utils/id");
 const runtimeTaskMap = {};
+const requestTaskIdMap = {};
 function getProgressByPhase(phase) {
     const progressMap = {
         queued: 0,
@@ -67,9 +68,33 @@ function createPreview(operationType) {
     };
 }
 async function startGenerationTask(params) {
-    const taskId = (0, id_1.createId)("task");
+    const clientRequestId = typeof params.clientRequestId === "string" ? params.clientRequestId.trim() : "";
+    if (!clientRequestId) {
+        const error = new Error("生成请求编号缺失，请返回后重试");
+        error.errorCode = "CLIENT_REQUEST_ID_REQUIRED";
+        throw error;
+    }
+    const requestKey = `${params.operationType || ""}|${clientRequestId}`;
+    const safeRequestId = clientRequestId.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const existingTaskId = requestTaskIdMap[requestKey] || `task-${params.operationType || "initial"}-${safeRequestId}`;
+    const existingRuntime = runtimeTaskMap[existingTaskId] || hydrateRuntimeTask(existingTaskId);
+    if (existingRuntime) {
+        if (existingRuntime.task.workId !== params.workId ||
+            (existingRuntime.task.reservationId || "") !== (params.reservationId || "")) {
+            const error = new Error("该请求编号已经用于另一项生成操作");
+            error.errorCode = "GENERATION_REQUEST_CONFLICT";
+            throw error;
+        }
+        requestTaskIdMap[requestKey] = existingTaskId;
+        return Promise.resolve({
+            task: existingRuntime.task,
+            duplicated: true
+        });
+    }
+    const taskId = existingTaskId;
     const task = {
         taskId,
+        clientRequestId,
         workId: params.workId,
         targetVersionId: "",
         operationType: params.operationType,
@@ -94,7 +119,13 @@ async function startGenerationTask(params) {
         simulateFailure: Boolean(params.simulateFailure),
         completedVersion: null
     };
-    return Promise.resolve(task);
+    if (clientRequestId) {
+        requestTaskIdMap[requestKey] = taskId;
+    }
+    return Promise.resolve({
+        task,
+        duplicated: false
+    });
 }
 async function pollGenerationTask(taskId) {
     const runtime = runtimeTaskMap[taskId] || hydrateRuntimeTask(taskId);
@@ -160,6 +191,11 @@ function clearTasksByWorkId(workId) {
     Object.keys(runtimeTaskMap).forEach((taskId) => {
         var _a;
         if (((_a = runtimeTaskMap[taskId]) === null || _a === void 0 ? void 0 : _a.task.workId) === workId) {
+            const task = runtimeTaskMap[taskId].task;
+            const requestKey = `${task.operationType || ""}|${task.clientRequestId || ""}`;
+            if (requestTaskIdMap[requestKey] === taskId) {
+                delete requestTaskIdMap[requestKey];
+            }
             delete runtimeTaskMap[taskId];
         }
     });

@@ -38,7 +38,10 @@ async function callGenerationFunction(name, data = {}) {
 
 async function startGenerationTask(params = {}) {
   const data = await callGenerationFunction("startGenerationTask", params);
-  return data.task;
+  return {
+    task: data.task || null,
+    duplicated: data.duplicated === true
+  };
 }
 
 async function pollGenerationTask(taskId) {
