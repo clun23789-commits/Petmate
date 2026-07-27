@@ -33,6 +33,53 @@ test("a complete definition match passes with ordered keys and unique attributes
   assert.equal(report.warnings.length, 0);
 });
 
+test("the _id_ system index accepts Unique=true", () => {
+  const remote = readFixture("remote-matching.json");
+  remote.Tables.forEach((table) => {
+    findIndex(remote, table.TableName, "_id_").Unique = true;
+  });
+  const report = compareIndexConfiguration(expected, remote);
+  assert.equal(report.passed, true);
+});
+
+test("the _id_ system index accepts Unique=false", () => {
+  const remote = readFixture("remote-matching.json");
+  remote.Tables.forEach((table) => {
+    findIndex(remote, table.TableName, "_id_").Unique = false;
+  });
+  const report = compareIndexConfiguration(expected, remote);
+  assert.equal(report.passed, true);
+});
+
+for (const [label, mutate, field] of [
+  [
+    "field",
+    (index) => {
+      index.Keys[0].Name = "id";
+    },
+    "keys[0].name"
+  ],
+  [
+    "direction",
+    (index) => {
+      index.Keys[0].Direction = "-1";
+    },
+    "keys[0].direction"
+  ]
+]) {
+  test(`the _id_ system index still rejects an incorrect ${label}`, () => {
+    const remote = readFixture("remote-matching.json");
+    mutate(findIndex(remote, "works", "_id_"));
+    const report = compareIndexConfiguration(expected, remote);
+    assert.equal(report.passed, false);
+    const mismatch = report.mismatched.find(
+      (item) => item.collection === "works" && item.name === "_id_"
+    );
+    assert.ok(mismatch);
+    assert.ok(mismatch.differences.some((difference) => difference.field === field));
+  });
+}
+
 test("a missing collection fails", () => {
   const remote = readFixture("remote-matching.json");
   remote.Tables = remote.Tables.filter((table) => table.TableName !== "orders");
@@ -75,7 +122,7 @@ for (const [label, mutate, field] of [
     "keys[1].direction"
   ],
   [
-    "unique property",
+    "business index unique property",
     (index) => {
       index.Unique = true;
     },

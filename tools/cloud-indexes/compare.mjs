@@ -52,6 +52,26 @@ function evaluateStatus(status, statusPolicy) {
   return { severity: "error", code: "INDEX_STATUS_NOT_READY" };
 }
 
+function compareUnique(expectedIndex, actualIndex) {
+  const acceptsCloudBaseIdVariants =
+    expectedIndex.system === true &&
+    expectedIndex.name === "_id_" &&
+    (actualIndex.unique === true || actualIndex.unique === false);
+  if (acceptsCloudBaseIdVariants || expectedIndex.unique === actualIndex.unique) {
+    return [];
+  }
+  return [
+    {
+      field: "unique",
+      expected:
+        expectedIndex.system === true && expectedIndex.name === "_id_"
+          ? [true, false]
+          : expectedIndex.unique,
+      actual: actualIndex.unique
+    }
+  ];
+}
+
 export function compareIndexConfiguration(rawExpected, rawRemote) {
   const expected = normalizeExpectedConfiguration(rawExpected);
   const remote = normalizeRemoteCollectionsAndIndexes(rawRemote);
@@ -99,14 +119,10 @@ export function compareIndexConfiguration(rawExpected, rawRemote) {
         continue;
       }
 
-      const differences = compareKeys(expectedIndex.keys, actualIndex.keys);
-      if (expectedIndex.unique !== actualIndex.unique) {
-        differences.push({
-          field: "unique",
-          expected: expectedIndex.unique,
-          actual: actualIndex.unique
-        });
-      }
+      const differences = [
+        ...compareKeys(expectedIndex.keys, actualIndex.keys),
+        ...compareUnique(expectedIndex, actualIndex)
+      ];
 
       const status = evaluateStatus(actualIndex.status, expected.statusPolicy);
       if (status.severity === "error") {
