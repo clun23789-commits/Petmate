@@ -26,8 +26,13 @@ async function callWorkFunction(name, data = {}) {
     return unwrapCloudEnvelope(response, name);
 }
 
-async function saveWorkBundle(payload) {
-    return callWorkFunction("saveWork", payload);
+async function saveWorkBundle(payload = {}) {
+    return callWorkFunction("saveWork", {
+        taskId: payload.taskId,
+        workId: payload.workId,
+        versionId: payload.versionId,
+        reason: "client_recovery"
+    });
 }
 
 async function listWorks() {

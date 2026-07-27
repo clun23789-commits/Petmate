@@ -329,7 +329,7 @@ Page({
     const result = await saveDetailRetouch(this.data.workId, this.data.versionId, this.data.color, note);
 
     if (result && result.ok === true) {
-      showToast("细节补色已保存", "success");
+      showToast("细节补色已保存在本机", "success");
       saveTimer = setTimeout(() => {
         replace("/pages/works/result/index", {
           workId: this.data.workId,
