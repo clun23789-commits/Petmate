@@ -4,9 +4,11 @@ const { deleteWork, getWork, listWorks, saveWorkBundle } = require("../services/
 const { store } = require("../store/core/createStore");
 const {
     buildPendingCloudSave,
+    consumePendingCloudSaveNotice,
     isPendingCloudSaveExpired,
     matchesPendingCloudSave,
     readPendingCloudSave,
+    readPendingCloudSaveResult,
     removePendingCloudSave,
     writePendingCloudSave
 } = require("../utils/pendingCloudSaveStorage");
@@ -133,8 +135,8 @@ function getStatusMessage(result, fallback) {
     return (result && result.message) || fallback;
 }
 
-function setPendingCloudSave(work, version, options = {}) {
-    const pending = buildPendingCloudSave(work, version, options);
+function setPendingCloudSave(references, options = {}) {
+    const pending = buildPendingCloudSave(references, options);
     if (!pending) {
         return;
     }
@@ -415,29 +417,69 @@ async function ensureCloudWorkLoaded(workId) {
     return result;
 }
 
-async function saveCurrentWorkToCloud(work, version, options = {}) {
-    const workId = work && work.workId;
+const TERMINAL_SAVE_WORK_ERRORS = new Set([
+    "SAVE_WORK_TASK_REQUIRED",
+    "SAVE_WORK_TASK_NOT_FOUND",
+    "SAVE_WORK_REFERENCE_MISMATCH",
+    "SAVE_WORK_RESULT_INVALID",
+    "SAVE_WORK_LEGACY_PAYLOAD_REJECTED",
+    "WORK_ALREADY_DELETED"
+]);
 
-    if (!workId || !version || !version.versionId) {
+function normalizeSaveReferences(references) {
+    return {
+        taskId: typeof references.taskId === "string" ? references.taskId.trim() : "",
+        workId: typeof references.workId === "string" ? references.workId.trim() : "",
+        versionId: typeof references.versionId === "string" ? references.versionId.trim() : ""
+    };
+}
+
+async function refreshRecoveredWork(workId) {
+    const result = await getWork(workId);
+    if (result.ok !== true) {
+        return result;
+    }
+    const data = result.data || {};
+    syncCloudWorksToStore(data.work ? [data.work] : [], data.versions || []);
+    return result;
+}
+
+async function saveWorkReferences(references, options = {}) {
+    const normalized = normalizeSaveReferences(references);
+    if (!normalized.taskId) {
         return {
             ok: false,
-            errorCode: "SAVE_WORK_INVALID_PAYLOAD",
-            message: "作品保存失败"
+            errorCode: "SAVE_WORK_TASK_REQUIRED",
+            message: "缺少生成任务引用，无法恢复云端作品"
+        };
+    }
+    if (!normalized.workId || !normalized.versionId) {
+        return {
+            ok: false,
+            errorCode: "SAVE_WORK_REFERENCE_MISMATCH",
+            message: "作品恢复引用不完整"
         };
     }
 
-    setPendingCloudSave(work, version, options);
-    setWorkStatusMap("cloudSaveStatusMap", workId, "loading", "saveCurrentWorkToCloudStart", {
+    setPendingCloudSave(normalized, {
+        createdAt: options.createdAt
+    });
+    setWorkStatusMap("cloudSaveStatusMap", normalized.workId, "loading", "saveWorkReferencesStart", {
         cloudError: ""
     });
 
     const result = await saveWorkBundle({
-        work,
-        version
+        taskId: normalized.taskId,
+        workId: normalized.workId,
+        versionId: normalized.versionId,
+        reason: "client_recovery"
     });
 
     if (result.ok !== true) {
-        setWorkStatusMap("cloudSaveStatusMap", workId, "failed", "saveCurrentWorkToCloudFailed", {
+        if (TERMINAL_SAVE_WORK_ERRORS.has(result.errorCode)) {
+            clearPendingCloudSave(normalized.workId, normalized.versionId, "clearTerminalPendingCloudSave");
+        }
+        setWorkStatusMap("cloudSaveStatusMap", normalized.workId, "failed", "saveWorkReferencesFailed", {
             cloudError: getStatusMessage(result, "作品已生成，但暂时未同步到云端")
         });
         if (!options.silent) {
@@ -446,44 +488,61 @@ async function saveCurrentWorkToCloud(work, version, options = {}) {
         return result;
     }
 
-    store.setState((state) => {
-        const existingWork = state.workState.workMap[workId] || work;
-        const existingVersion = state.workState.versionMap[version.versionId] || version;
+    clearPendingCloudSave(normalized.workId, normalized.versionId, "clearPendingCloudSaveAfterSuccess");
+    const refreshResult = await refreshRecoveredWork(normalized.workId);
+    if (refreshResult.ok !== true) {
+        setWorkStatusMap("cloudSaveStatusMap", normalized.workId, "failed", "refreshRecoveredWorkFailed", {
+            cloudError: getStatusMessage(refreshResult, "作品已恢复，请稍后刷新云端数据")
+        });
         return {
-            workState: {
-                ...state.workState,
-                workMap: {
-                    ...state.workState.workMap,
-                    [workId]: {
-                        ...existingWork,
-                        cloudSynced: true
-                    }
-                },
-                versionMap: {
-                    ...state.workState.versionMap,
-                    [version.versionId]: {
-                        ...existingVersion,
-                        cloudSynced: true
-                    }
-                },
-                cloudSaveStatusMap: {
-                    ...state.workState.cloudSaveStatusMap,
-                    [workId]: "success"
-                },
-                cloudError: "",
-                lastCloudSyncedAt: new Date().toISOString()
-            }
+            ...refreshResult,
+            saveRecovered: true,
+            errorCode: "SAVE_WORK_REFRESH_FAILED"
         };
-    }, "saveCurrentWorkToCloudSuccess");
-    clearPendingCloudSave(workId, version.versionId, "clearPendingCloudSaveAfterSuccess");
+    }
 
-    return result;
+    setWorkStatusMap("cloudSaveStatusMap", normalized.workId, "success", "saveWorkReferencesSuccess", {
+        cloudError: "",
+        lastCloudSyncedAt: new Date().toISOString()
+    });
+    return {
+        ...result,
+        refreshed: true
+    };
+}
+
+async function saveCurrentWorkToCloud(work, version, options = {}) {
+    return saveWorkReferences({
+        taskId: options.taskId,
+        workId: work && work.workId,
+        versionId: version && version.versionId
+    }, options);
 }
 
 async function retryPendingCloudSave(options = {}) {
     const currentPending = store.getState().workState.pendingCloudSave;
-    const pending = currentPending || readPendingCloudSave();
+    const readResult = currentPending
+        ? { pending: currentPending, errorCode: "" }
+        : readPendingCloudSaveResult();
+    const pending = readResult.pending;
     if (!pending) {
+        const notice = consumePendingCloudSaveNotice();
+        const errorCode = readResult.errorCode || (notice && notice.errorCode);
+        if (errorCode) {
+            const message = (notice && notice.message) || "待同步记录已失效，请重新进入作品页刷新";
+            setWorkStatePatch({
+                cloudError: message
+            }, "pendingCloudSaveUnavailable");
+            if (!options.silent || errorCode === "PENDING_CLOUD_SAVE_LEGACY_DROPPED") {
+                showToast(message);
+            }
+            return {
+                ok: false,
+                skipped: true,
+                errorCode,
+                message
+            };
+        }
         return {
             ok: true,
             skipped: true
@@ -509,34 +568,26 @@ async function retryPendingCloudSave(options = {}) {
         }), "restorePendingCloudSaveBeforeRetry");
     }
 
-    const result = await saveCurrentWorkToCloud(pending.work, pending.version, {
-        taskId: pending.taskId,
+    const result = await saveWorkReferences(pending, {
         createdAt: pending.createdAt,
         silent: options.silent
     });
-
     if (result.ok === true && !options.silent) {
         showToast("作品已重新同步到云端", "success");
     }
-
     return result;
 }
 
 async function retrySaveWorkToCloud(workId) {
-    const state = store.getState();
-    const work = state.workState.workMap[workId];
-    const versionId = work && work.currentVersionId;
-    const version = versionId ? state.workState.versionMap[versionId] : null;
-
-    if (!work || !version) {
+    const pending = store.getState().workState.pendingCloudSave || readPendingCloudSave();
+    if (!pending || pending.workId !== workId) {
         return {
             ok: false,
-            errorCode: "WORK_SAVE_RETRY_INVALID",
-            message: "作品信息不完整，无法保存"
+            errorCode: "SAVE_WORK_TASK_REQUIRED",
+            message: "缺少生成任务引用，无法重试云端恢复"
         };
     }
-
-    return saveCurrentWorkToCloud(work, version);
+    return retryPendingCloudSave();
 }
 
 async function deleteCloudWorkOnly(workId) {

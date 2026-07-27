@@ -15,7 +15,6 @@ const { PAGE_ROUTES } = require("../utils/routes");
 const toast_1 = require("../utils/toast");
 const creationFlow_1 = require("./creationFlow");
 const optimizeQuota_1 = require("./optimizeQuota");
-const { saveCurrentWorkToCloud } = require("./workSyncFlow");
 const TARGETED_REQUIRED_VIEW = {
     fur: "front",
     pattern: "pattern",
@@ -77,11 +76,13 @@ async function updateFeedback(workId, dimension, value) {
         ...currentVersion,
         workId,
         feedbackSummary,
-        updatedAt: now
+        updatedAt: now,
+        cloudSynced: false
     };
     const updatedWork = {
         ...work,
-        updatedAt: now
+        updatedAt: now,
+        cloudSynced: false
     };
     createStore_1.store.setState((state) => ({
         workState: {
@@ -104,7 +105,13 @@ async function updateFeedback(workId, dimension, value) {
         }
     }), "updateFeedback");
 
-    return saveCurrentWorkToCloud(updatedWork, updatedVersion);
+    return {
+        ok: true,
+        workId,
+        versionId: currentVersion.versionId,
+        localOnly: true,
+        cloudSaved: false
+    };
 }
 async function reserveOptimization(workId, source, reservationId) {
     const work = (0, index_1.selectWorkById)(createStore_1.store.getState(), workId);
@@ -251,13 +258,15 @@ async function saveDetailRetouch(workId, versionId, color, note) {
             notes: [...currentNotes, note || "已完成局部补色保存"]
         },
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        cloudSynced: false
     };
     const nextWork = {
         ...currentWork,
         status: "retouched",
         currentVersionId: newVersion.versionId,
         updatedAt: now,
+        cloudSynced: false,
         versionIds: currentWork.versionIds.includes(newVersion.versionId)
             ? currentWork.versionIds
             : [...currentWork.versionIds, newVersion.versionId]
@@ -278,23 +287,11 @@ async function saveDetailRetouch(workId, versionId, color, note) {
         }
     }), "saveDetailRetouch");
 
-    const saveResult = await saveCurrentWorkToCloud(nextWork, newVersion);
-
-    if (saveResult.ok !== true) {
-        return {
-            ok: false,
-            errorCode: "DETAIL_RETOUCH_SAVE_FAILED",
-            message: saveResult.message || "细节补色已在本地保存，但云端同步失败，请重试",
-            workId,
-            versionId: newVersion.versionId,
-            cloudSaved: false
-        };
-    }
-
     return {
         ok: true,
         workId,
         versionId: newVersion.versionId,
-        cloudSaved: true
+        localOnly: true,
+        cloudSaved: false
     };
 }

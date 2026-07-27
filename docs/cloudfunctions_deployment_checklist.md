@@ -17,7 +17,7 @@
 |---:|---|---|---|---|
 | 1 | `syncUser` | 用户 | `users` | 启动小程序后能写入或返回当前用户 openid |
 | 2 | `updateUserProfile` | 用户 | `users` | 基于当前 openid 更新昵称与头像展示字段 |
-| 3 | `saveWork` | 作品 | `works`, `workVersions` | 能保存作品和版本，不能复活 deleted 作品 |
+| 3 | `saveWork` | 作品恢复 | `generationTasks`, `works`, `workVersions` | 只接收任务/作品/版本引用，从任务白名单事务恢复，不能复活 deleted 作品 |
 | 4 | `listWorks` | 作品 | `works`, `workVersions` | 能按当前用户读取作品列表 |
 | 5 | `getWork` | 作品 | `works`, `workVersions` | 只能读取当前用户作品 |
 | 6 | `deleteWork` | 作品 | `works`, `arEntitlements`, `shares` | 软删除作品并撤销或失效关联记录 |
@@ -92,6 +92,15 @@
 - [ ] 在测试环境分别注入版本、作品写入失败，确认 `works / workVersions / generationTasks` 最终成功状态整体回滚。
 - [ ] 部署新版小程序后验证 `petmate.generationRequests.v1` 只保存请求引用，任务成功或明确失败后会清理。
 - [ ] `startGenerationTask` 与 `pollGenerationTask` 需要同批部署，避免前端收到缺少 `providerStatus / resultSaveStatus` 的旧任务协议。
+
+## P0 作品恢复服务端权威化部署提醒
+
+- [ ] `saveWork` 部署包必须包含 `core.js`，并与新版小程序同批发布；旧版完整 `work / version` 请求会被明确拒绝。
+- [ ] 部署前运行 `npm run test:save-work`、`npm run check:save-work` 和 `npm run check`。
+- [ ] 用保存失败但结果完整的测试任务调用 `saveWork`，确认只传 `taskId / workId / versionId`，事务恢复后再由 `getWork` 返回权威作品。
+- [ ] 验证 `petmate.pendingCloudSave.v2` 只保存引用；v1 有效引用可迁移，缺少 `taskId` 的 v1 会删除并提示刷新。
+- [ ] 验证旧协议、跨用户任务、错误引用、未完成任务、无效结果和 deleted 作品均被拒绝且不产生数据库写入。
+- [ ] 结构化反馈和细节补色在独立服务端命令接口完成前仅保留本地，不要把 `saveWork` 恢复为通用写接口。
 
 ## P0-01 优化预占事务化部署提醒
 

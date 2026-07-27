@@ -44,7 +44,7 @@
   versionIds: ["version-xxx"],
 
   previewImage: "首页或列表封面，可为空",
-  source: "mock_generation",
+  source: "basic_generation",
 
   createdAt: Date,
   updatedAt: Date,
@@ -58,9 +58,11 @@
 - 查询列表必须带 `ownerOpenid`，并默认排除 `status === "deleted"`。
 - 删除作品只更新 `status`、`deletedAt`、`updatedAt`，不物理删除记录。
 - `versionIds` 必须保留，当前 selector 和页面依赖该字段。
+- `saveWork` 仅是服务端生成结果恢复接口，不是通用客户端写接口。请求只允许携带 `taskId / workId / versionId / reason` 引用；出现旧版完整 `work / version` 对象时返回 `SAVE_WORK_LEGACY_PAYLOAD_REJECTED`，且不写数据库。
+- `saveWork` 必须从归属当前用户的 `generationTasks` 重建作品与版本白名单，并校验任务已存在完整 `resultSnapshot` 且处于允许恢复的保存状态。客户端传入的 `status / ownerOpenid / source / createdAt` 和未知字段均不得进入数据库。
 - `saveWork` 不允许把已删除作品重新保存为可见作品；如果云端已有 `status === "deleted"` 的同 `workId` 记录，应返回 `WORK_ALREADY_DELETED`。
-- `saveWork` 必须先完成版本归属校验，再写入 `works` 和 `workVersions`。如果 `versionId` 已属于其他 `workId`，必须返回 `VERSION_WORK_MISMATCH`，且不允许产生 `works` 已更新、`workVersions` 未写入的半成功状态。
-- 生成、优化、细节补色后的当前作品都应通过 `saveWork` 同步到云端；前端页面继续使用 `workId`，不使用数据库 `_id`。
+- `saveWork` 必须在一个事务内写入 `works / workVersions / generationTasks` 恢复终态。任务、作品或版本引用不一致时返回 `SAVE_WORK_REFERENCE_MISMATCH`，写入任一步失败时整体回滚。
+- 正常 initial / optimize / targeted_upload 结果由 `pollGenerationTask` 原子落库；前端页面继续使用 `workId`，不使用数据库 `_id`。结构化反馈和细节补色当前仅保存在本地，待后续增加各自的服务端命令接口后再同步，不能借用 `saveWork` 上传任意对象。
 
 ## workVersions
 
@@ -97,10 +99,10 @@
 - 保存版本时以 `ownerOpenid + versionId` 避免重复插入。
 - 云函数写入 `ownerOpenid`，前端传入值不能覆盖。
 - 删除作品时不删除版本记录。
-- `version.workId` 如果存在，必须与 `work.workId` 一致；不一致时 `saveWork` 应返回 `VERSION_WORK_MISMATCH`，避免版本错挂到其他作品。
+- 恢复保存时，`generationTasks.workId / targetVersionId / resultSnapshot.workId / resultSnapshot.versionId` 必须与请求引用一致；不一致时返回 `SAVE_WORK_REFERENCE_MISMATCH`。
 - `sourceType` 当前只允许 `initial / optimize / targeted_upload / detail_retouch`。
-- 用户在结果页点击“像 / 不像”后，`feedbackSummary` 会同步保存到当前 `workVersions` 记录。
-- 细节补色会产生新的 `sourceType = "detail_retouch"` 版本，并将 `works.currentVersionId` 指向该新版本。
+- 用户在结果页点击“像 / 不像”后，`feedbackSummary` 当前只更新本地版本；不能通过生成结果恢复接口写回云端。
+- 细节补色当前只在本地产生新的 `sourceType = "detail_retouch"` 版本；云端持久化需要后续独立、服务端权威的补色命令接口。
 
 ## uploadAssets
 
@@ -211,7 +213,9 @@
 - 同一 `reservationId` 最多绑定一个任务；重复提交必须返回已绑定任务，不得创建第二个 `generationTasks` 记录。
 - 不允许无素材创建初始生成任务。
 - `resultSnapshot` 必须保持对象结构，不应初始化为 `null`，避免 CloudBase 更新嵌套字段时出现 `Cannot create field xxx in element null` 错误。
-- 前端在生成完成、调用 `saveWork` 前会写入本地 `pendingCloudSave` 标记；保存失败时保留，后续启动或进入作品链路会自动重试，成功后清除。
+- 正常生成成功由 `pollGenerationTask` 直接完成云端落库。仅当任务已有完整结果但最终落库需要恢复时，前端写入 `petmate.pendingCloudSave.v2`，且只保存 `taskId / workId / versionId / createdAt`。
+- 读取旧 `petmate.pendingCloudSave.v1` 时，只提取有效任务、作品和版本引用后迁移到 v2；缺少 `taskId` 的旧记录直接删除并返回 `PENDING_CLOUD_SAVE_LEGACY_DROPPED`，完整对象不得再次上传。
+- `saveWork` 恢复成功后先清除 v2，再通过 `getWork(workId)` 重新拉取服务端权威数据；可重试失败保留引用，任务不存在、引用不一致或结果无效等终态错误清除引用。
 - 优化任务明确失败时不正式扣减优化次数；网络查询失败不等于任务失败，不能据此释放预占。
 
 ## optimizeQuotas

@@ -38,6 +38,8 @@ P0-01 已在源码中完成优化次数事务化：`reserveOptimizeQuota / commi
 
 P0 生成任务幂等与并发锁已在源码中完成：`startGenerationTask` 要求持久化 `clientRequestId` 并用确定性 `_id` 在事务内创建任务；`pollGenerationTask` 使用 60 秒处理锁、token 和 revision 防止并发推进，最终在单个事务内提交 `works / workVersions / generationTasks`。客户端只持久化最小请求引用并可在网络超时或应用重启后找回原任务；相关云函数和小程序仍需按部署清单在目标测试环境手动部署、真机验证。
 
+P0 作品恢复服务端权威化已在源码中完成：`saveWork` 不再接收完整作品和版本，只接受 `taskId / workId / versionId`，从归属当前用户且已有完整结果的 `generationTasks` 白名单重建数据，并在一个事务内提交作品、版本和任务恢复终态。已删除作品不可复活，重复恢复幂等；`petmate.pendingCloudSave.v2` 只保存引用，v1 只迁移有效引用。恢复成功后前端会重新拉取云端作品，不再直接信任本地对象。结构化反馈和细节补色在独立服务端命令接口完成前保持本地状态；新版 `saveWork`、小程序和迁移流程仍需按部署及冒烟清单在目标测试环境手动验证。
+
 清理云函数源码已增加客户端调用隔离：带普通用户 `OPENID` 的请求会在数据库扫描前被拒绝；成功响应只返回汇总数字，失败日志中的用户、预占、任务和作品标识使用 12 位哈希引用。development 已完成清理云函数、函数安全规则、`idx_status_expires` 索引和每 10 分钟定时触发器配置；staging 尚未独立部署，production 尚未部署。
 
 P0-02 已在源码中完成广告奖励可信结算链路：前端在展示广告前调用 `createAdRewardSession` 创建 10 分钟 pending 会话，`grantAdReward` 在单个事务内写入 `adRewardGrants / optimizeQuotaGrants / optimizeQuotas` 并固定增加 3 次；重复与并发结算保持幂等。`getAdRewardStatus` 只在广告记录、次数流水和配额汇总完整时返回 `granted + quota`，旧 `grantOptimizeQuota` 已降级为只读兼容查询，前端不再调用独立次数发放入口。源码单元测试与静态契约已补齐，但相关云函数、两个新增建议索引和新版小程序仍需按部署清单在目标测试环境手动部署、创建并真机验证。

@@ -86,4 +86,15 @@ revoked
 - 结果无效：`failureCode = "GENERATION_RESULT_INVALID"`，任务不得返回 `success`；如果关联优化预占，仍由现有前端失败路径释放 reservation。
 - 结果落库失败：`works / workVersions / generationTasks` 最终事务整体回滚，任务不得返回 `success`；随后持锁失败路径写入 `resultSaveStatus = "failed"`、`failureCategory = "save"`，避免用户进入半成功结果页。
 - 云端落库成功：`resultSaveStatus = "success"`、`finalizedWorkId = workId`、`finalizedVersionId = targetVersionId`，前端只同步本地 store，不再重复调用 `saveWork`。
-- 旧版本的本地 upsert + `saveCurrentWorkToCloud` 兜底路径仅作为兼容历史任务的保护，不是当前推荐路径。
+- 历史任务如已有完整 `resultSnapshot` 但缺少最终作品落库，只能通过引用式 `saveWork` 恢复，不能上传本地完整作品或版本对象。
+
+## 第 4 阶段：作品落库恢复策略
+
+- `saveWork` 定位为服务端生成结果恢复接口。客户端只提交 `taskId / workId / versionId`，服务端校验任务归属、任务状态与引用一致性，再从 `generationTasks` 白名单构建最终作品和版本。
+- 请求中出现旧版 `work / version` 完整对象时返回 `SAVE_WORK_LEGACY_PAYLOAD_REJECTED`；缺少任务、任务不存在、任务未准备、结果不完整或引用不一致时分别返回明确错误，不得降级为本地对象写入。
+- `works / workVersions / generationTasks` 恢复终态在单个事务内提交；任何一步失败都保留原失败任务状态且不产生半成功作品。重复恢复同一任务只返回原作品和版本。
+- 已删除作品返回 `WORK_ALREADY_DELETED`，不能通过历史任务复活。
+- 待恢复缓存使用 `petmate.pendingCloudSave.v2`，只保存 `taskId / workId / versionId / createdAt`。v1 有完整引用时迁移并丢弃对象；缺少 `taskId` 时删除并返回 `PENDING_CLOUD_SAVE_LEGACY_DROPPED`。
+- 可重试的云端异常保留 v2；任务不存在、引用不一致、结果无效、旧协议等终态错误清除 v2，避免无限重试。
+- 恢复成功后调用 `getWork(workId)` 重新拉取服务端数据，不直接把本地对象标记为已同步。
+- 结构化反馈与细节补色目前只更新本地状态，待各自的服务端权威命令接口完成后再同步；不能复用 `saveWork` 作为通用写入口。

@@ -159,6 +159,20 @@
 - [ ] 让 `works / workVersions` 写入失败时，任务进入 `failed`，且 `resultSaveStatus = failed`、`failureCode = GENERATION_RESULT_SAVE_FAILED`。
 - [ ] `workVersions.editableTexture.notes` 保留可读内容，结果页和细节优化页不会因为字段缺失报错。
 
+## S9.1：第 4 阶段作品恢复服务端权威化
+
+- [ ] 使用 `taskId / workId / versionId` 恢复一个 `resultSaveStatus = failed` 且结果完整的任务，确认 `works / workVersions / generationTasks` 在同一事务成功。
+- [ ] 请求附带完整 `work` 或 `version` 对象时返回 `SAVE_WORK_LEGACY_PAYLOAD_REJECTED`，数据库无写入。
+- [ ] 伪造 `status / ownerOpenid / source / createdAt` 和未知字段，确认最终作品与版本只包含服务端白名单字段。
+- [ ] 使用其他用户任务、缺失任务、未完成任务、错误 workId/versionId 和不完整 `resultSnapshot`，确认分别拒绝且无半成功数据。
+- [ ] 已删除作品不能恢复；重复恢复同一任务只保留一个作品与一个版本；legacy work/version 按原 `_id` 更新。
+- [ ] 分别注入版本和作品写入失败，确认事务整体回滚；移除故障后用同一引用可恢复成功。
+- [ ] `petmate.pendingCloudSave.v2` 只含 `taskId / workId / versionId / createdAt`，不含作品、版本、媒体、贴图、归属或状态字段。
+- [ ] 有完整引用的 v1 缓存迁移为 v2 且完整对象被丢弃；缺少 `taskId` 的 v1 被删除并提示重新进入作品页刷新。
+- [ ] 首次恢复失败时保留 v2；再次成功后清除 v2，并通过 `getWork(workId)` 拉取云端权威内容覆盖本地旧内容。
+- [ ] 任务不存在、引用不一致、结果无效或作品已删除等终态错误会清除 v2，不会在每次启动时无限重试。
+- [ ] 结构化反馈和细节补色不会调用 `saveWork`；它们在独立服务端命令接口完成前保持本地状态。
+
 ## S10：基础结果与 AR 入口恢复
 
 - [ ] development / staging mock generation 仍可完成。
