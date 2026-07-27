@@ -9,6 +9,7 @@ const optimization_1 = require("../services/optimization");
 const createStore_1 = require("../store/core/createStore");
 const index_1 = require("../store/selectors/index");
 const id_1 = require("../utils/id");
+const generationRequestStorage_1 = require("../utils/generationRequestStorage");
 const navigation_1 = require("../utils/navigation");
 const { PAGE_ROUTES } = require("../utils/routes");
 const toast_1 = require("../utils/toast");
@@ -30,10 +31,18 @@ function getSubmissionKey(workId, source) {
     return `${workId}:${source}`;
 }
 
-function getOrCreateReservationId(submissionKey) {
+function getOrCreateReservationId(submissionKey, workId, operationType) {
     const existing = pendingReservationIdMap.get(submissionKey);
     if (existing) {
         return existing;
+    }
+    const pendingRequest = (0, generationRequestStorage_1.findGenerationRequest)({
+        workId,
+        operationType
+    });
+    if (pendingRequest && pendingRequest.reservationId) {
+        pendingReservationIdMap.set(submissionKey, pendingRequest.reservationId);
+        return pendingRequest.reservationId;
     }
     const reservationId = (0, id_1.createId)("reservation");
     pendingReservationIdMap.set(submissionKey, reservationId);
@@ -170,7 +179,7 @@ async function runOptimizationSubmission({ workId, source, operationType, dimens
         if (dimension) {
             await updateFeedback(workId, dimension, "unlike");
         }
-        const reservationId = getOrCreateReservationId(submissionKey);
+        const reservationId = getOrCreateReservationId(submissionKey, workId, operationType);
         const reservation = await reserveOptimization(workId, source, reservationId);
         if (!reservation) {
             return null;

@@ -16,6 +16,7 @@ const upload_1 = require("../services/upload");
 const experience_1 = require("../config/experience");
 const createStore_1 = require("../store/core/createStore");
 const id_1 = require("../utils/id");
+const generationRequestStorage_1 = require("../utils/generationRequestStorage");
 const navigation_1 = require("../utils/navigation");
 const { PAGE_ROUTES } = require("../utils/routes");
 const toast_1 = require("../utils/toast");
@@ -843,9 +844,16 @@ async function startGenerationFromUpload(params) {
         }
     }
     const currentWork = createStore_1.store.getState().workState.workMap[work.workId] || work;
+    const requestScope = {
+        workId: currentWork.workId,
+        operationType: params.operationType,
+        reservationId: params.reservationId || ""
+    };
+    const generationRequest = (0, generationRequestStorage_1.getOrCreateGenerationRequest)(requestScope);
     let task = null;
     try {
-        task = await (0, generation_1.startGenerationTask)({
+        const startResult = await (0, generation_1.startGenerationTask)({
+            clientRequestId: generationRequest.clientRequestId,
             workId: currentWork.workId,
             operationType: params.operationType,
             reservationId: params.reservationId,
@@ -853,13 +861,34 @@ async function startGenerationFromUpload(params) {
             simulateFailure: params.simulateFailure,
             workSnapshot: currentWork
         });
+        task = startResult && startResult.task;
         if (!task || !task.taskId) {
             throw new Error("生成任务返回为空");
         }
+        (0, generationRequestStorage_1.saveGenerationTaskReference)({
+            ...generationRequest,
+            taskId: task.taskId
+        });
     }
     catch (error) {
         const failureReason = getErrorMessage(error, "生成任务提交失败，请稍后重试");
-        if (params.reservationId) {
+        const terminalStartErrorCodes = new Set([
+            "CLIENT_REQUEST_ID_REQUIRED",
+            "GENERATION_REQUEST_CONFLICT",
+            "GENERATION_TASK_INVALID_PAYLOAD",
+            "GENERATION_TASK_NO_UPLOAD_ASSET",
+            "GENERATION_TASK_NO_TARGETED_ASSET",
+            "GENERATION_TASK_WORK_NOT_FOUND",
+            "OPTIMIZE_RESERVATION_NOT_FOUND",
+            "OPTIMIZE_RESERVATION_CONFLICT",
+            "OPTIMIZE_RESERVATION_EXPIRED",
+            "OPTIMIZE_GENERATION_TASK_NOT_FOUND"
+        ]);
+        const isExplicitFailure = Boolean(error && terminalStartErrorCodes.has(error.errorCode));
+        if (isExplicitFailure) {
+            (0, generationRequestStorage_1.clearGenerationRequest)(requestScope);
+        }
+        if (params.reservationId && isExplicitFailure) {
             await (0, optimizeQuota_1.releaseOptimizationReservation)(params.reservationId);
         }
         markWorkAfterGenerationSubmitFailure(currentWork.workId, params.operationType, failureReason);
@@ -998,6 +1027,7 @@ async function pollActiveGeneration(taskId, options = {}) {
         }
     }), "pollActiveGeneration");
     if (result.task.status === "failed") {
+        (0, generationRequestStorage_1.clearGenerationRequestByTaskId)(taskId);
         createStore_1.store.setState((state) => {
             const currentWork = state.workState.workMap[result.task.workId];
             const nextStatus = (currentWork === null || currentWork === void 0 ? void 0 : currentWork.currentVersionId) ? currentWork.status : "failed";
@@ -1073,6 +1103,7 @@ async function pollActiveGeneration(taskId, options = {}) {
                 await (0, optimizeQuota_1.syncOptimizeQuota)({ silent: true });
             }
         }
+        (0, generationRequestStorage_1.clearGenerationRequestByTaskId)(taskId);
         initUploadFlow("initial");
         (0, navigation_1.replace)(PAGE_ROUTES.works.result, {
             workId: nextWork.workId,

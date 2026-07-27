@@ -20,23 +20,29 @@ function createHandler(db) {
     cloud: createCloud(OPENID),
     db,
     now: () => new Date(NOW.getTime() + 1000),
-    createTaskId: () => "task-created",
     logger: quietLogger()
   });
 }
 
-test("startGenerationTask creates and binds an optimize task atomically", async () => {
-  const db = createDb();
-  const result = await createHandler(db)({
+function createEvent(overrides = {}) {
+  return {
+    clientRequestId: "generation-request-optimize-test",
     reservationId: "reservation-test",
     workId: WORK_ID,
     operationType: "optimize",
+    ...overrides
+  };
+}
+
+test("startGenerationTask creates and binds an optimize task atomically", async () => {
+  const db = createDb();
+  const result = await createHandler(db)(createEvent({
     dimensionSet: ["tail"]
-  });
+  }));
+  const taskId = result.data.task.taskId;
   assert.equal(result.ok, true);
-  assert.equal(result.data.task.taskId, "task-created");
-  assert.deepEqual(db.get("generationTasks", "task-created").dimensionSet, ["fur"]);
-  assert.equal(db.get("optimizeReservations", reservationDoc()._id).taskId, "task-created");
+  assert.deepEqual(db.get("generationTasks", taskId).dimensionSet, ["fur"]);
+  assert.equal(db.get("optimizeReservations", reservationDoc()._id).taskId, taskId);
 });
 
 test("startGenerationTask returns the existing bound task on retry", async () => {
@@ -45,11 +51,7 @@ test("startGenerationTask returns the existing bound task on retry", async () =>
   if (!db.store.has("generationTasks")) {
     db.store.set("generationTasks", new Map([["task-test", generationTaskDoc()]]));
   }
-  const result = await createHandler(db)({
-    reservationId: "reservation-test",
-    workId: WORK_ID,
-    operationType: "optimize"
-  });
+  const result = await createHandler(db)(createEvent());
   assert.equal(result.ok, true);
   assert.equal(result.data.duplicated, true);
   assert.equal(db.all("generationTasks").length, 1);
@@ -63,11 +65,7 @@ for (const [label, overrides, operationType, errorCode] of [
 ]) {
   test(`startGenerationTask rejects ${label}`, async () => {
     const db = createDb(overrides);
-    const result = await createHandler(db)({
-      reservationId: "reservation-test",
-      workId: WORK_ID,
-      operationType
-    });
+    const result = await createHandler(db)(createEvent({ operationType }));
     assert.equal(result.errorCode, errorCode);
     assert.equal(db.all("generationTasks").length, 0);
   });
@@ -76,11 +74,7 @@ for (const [label, overrides, operationType, errorCode] of [
 test("startGenerationTask rolls back task creation when reservation binding fails", async () => {
   const db = createDb();
   db.failNext("optimizeReservations", "update");
-  const result = await createHandler(db)({
-    reservationId: "reservation-test",
-    workId: WORK_ID,
-    operationType: "optimize"
-  });
+  const result = await createHandler(db)(createEvent());
   assert.equal(result.errorCode, "OPTIMIZE_QUOTA_TRANSACTION_FAILED");
   assert.equal(db.all("generationTasks").length, 0);
   assert.equal(db.get("optimizeReservations", reservationDoc()._id).taskId, "");

@@ -69,12 +69,12 @@ function getReservationDocId(openid, reservationId) {
   return createSafeDocId("optimize_reservation", `${openid}:${reservationId}`);
 }
 
-function createDefaultTaskId() {
-  return `task-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+function getGenerationTaskDocId(openid, operationType, clientRequestId) {
+  return createSafeDocId("generation_task", `${openid}:${operationType}:${clientRequestId}`);
 }
 
 function createTargetVersionId(taskId) {
-  return `version-${normalizeString(taskId).replace(/^task-/, "")}`;
+  return createSafeDocId("generation_version", taskId);
 }
 
 function getUploadAssetIds(assets) {
@@ -102,24 +102,22 @@ function buildInputViews(activeAssets) {
 }
 
 function buildSafeWorkSnapshot(input, fallbackWork, now) {
-  const source = {
-    ...normalizeObject(input),
-    ...normalizeObject(fallbackWork)
-  };
-  const workId = normalizeString(source.workId);
+  const inputSnapshot = normalizeObject(input);
+  const fallback = normalizeObject(fallbackWork);
+  const workId = normalizeString(fallback.workId || inputSnapshot.workId);
   if (!workId) {
     return {};
   }
   return {
     workId,
-    petType: normalizeString(source.petType) || "cat",
-    petTypeLabel: normalizeString(source.petTypeLabel),
-    petName: normalizeString(source.petName) || "当前宠物作品",
-    displayName: normalizeString(source.displayName),
-    versionIds: normalizeArray(source.versionIds),
-    previewImage: normalizeString(source.previewImage),
-    source: normalizeString(source.source) || BASIC_GENERATION_PROVIDER,
-    createdAt: source.createdAt || now
+    petType: normalizeString(fallback.petType || inputSnapshot.petType) || "cat",
+    petTypeLabel: normalizeString(fallback.petTypeLabel || inputSnapshot.petTypeLabel),
+    petName: normalizeString(fallback.petName || inputSnapshot.petName) || "当前宠物作品",
+    displayName: normalizeString(fallback.displayName || inputSnapshot.displayName),
+    versionIds: normalizeArray(fallback.versionIds || inputSnapshot.versionIds),
+    previewImage: normalizeString(fallback.previewImage || inputSnapshot.previewImage),
+    source: normalizeString(fallback.source || inputSnapshot.source) || BASIC_GENERATION_PROVIDER,
+    createdAt: fallback.createdAt || inputSnapshot.createdAt || now
   };
 }
 
@@ -130,25 +128,32 @@ function hasUploadAsset(assets, predicate) {
 function validateTaskInputs(operationType, work, activeAssets) {
   if (operationType === "initial") {
     if (!activeAssets.length || !hasUploadAsset(activeAssets, (asset) => normalizeString(asset.role) === "initial")) {
-      throw new BusinessError("GENERATION_TASK_NO_UPLOAD_ASSET", "还没有可用于生成的宠物照片，请先上传一张清晰正脸图。");
+      throw new BusinessError(
+        "GENERATION_TASK_NO_UPLOAD_ASSET",
+        "还没有可用于生成的宠物照片，请先上传一张清晰照片。"
+      );
     }
   }
   if (operationType === "targeted_upload") {
     if (!work || work.status === "deleted") {
-      throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试");
+      throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试。");
     }
     if (!hasUploadAsset(activeAssets, (asset) => normalizeString(asset.role) === "targeted")) {
-      throw new BusinessError("GENERATION_TASK_NO_TARGETED_ASSET", "还没有可用于定向优化的补充照片，请先上传补图后再生成。");
+      throw new BusinessError(
+        "GENERATION_TASK_NO_TARGETED_ASSET",
+        "还没有可用于定向优化的补充照片，请先上传补图后再生成。"
+      );
     }
   }
   if (operationType === "optimize" && (!work || work.status === "deleted")) {
-    throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试");
+    throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试。");
   }
 }
 
 function toTaskResponse(task) {
   return {
     taskId: task.taskId,
+    clientRequestId: task.clientRequestId || "",
     workId: task.workId,
     targetVersionId: task.targetVersionId || "",
     operationType: task.operationType,
@@ -164,14 +169,28 @@ function toTaskResponse(task) {
     resultSaveStatus: task.resultSaveStatus || "idle",
     finalizedWorkId: task.finalizedWorkId || "",
     finalizedVersionId: task.finalizedVersionId || "",
-    reservationId: task.reservationId || ""
+    reservationId: task.reservationId || "",
+    revision: Number(task.revision || 0)
   };
 }
 
-function buildTask({ openid, workId, operationType, reservationId, dimensionSet, activeAssets, work, event, taskId, now }) {
+function buildTask({
+  openid,
+  clientRequestId,
+  workId,
+  operationType,
+  reservationId,
+  dimensionSet,
+  activeAssets,
+  work,
+  event,
+  taskId,
+  now
+}) {
   return {
     _id: taskId,
     taskId,
+    clientRequestId,
     ownerOpenid: openid,
     workId,
     operationType,
@@ -205,6 +224,11 @@ function buildTask({ openid, workId, operationType, reservationId, dimensionSet,
     resultSaveErrorMessage: "",
     finalizedWorkId: "",
     finalizedVersionId: "",
+    revision: 0,
+    processingToken: "",
+    processingStartedAt: null,
+    processingExpiresAt: null,
+    lastProcessedAt: null,
     createdAt: now,
     updatedAt: now,
     completedAt: null,
@@ -215,9 +239,7 @@ function buildTask({ openid, workId, operationType, reservationId, dimensionSet,
 }
 
 function withoutId(doc) {
-  const data = {
-    ...doc
-  };
+  const data = { ...doc };
   delete data._id;
   return data;
 }
@@ -229,14 +251,22 @@ function unwrapTransactionResult(value) {
   return value;
 }
 
-function verifyExistingTask(task, reservation, openid, workId, operationType) {
+function verifyExistingTask(task, expected, options = {}) {
+  const existingClientRequestId = normalizeString(task.clientRequestId);
   if (
-    normalizeString(task.ownerOpenid) !== openid ||
-    normalizeString(task.workId) !== workId ||
-    normalizeString(task.reservationId) !== normalizeString(reservation.reservationId) ||
-    normalizeString(task.operationType) !== operationType
+    normalizeString(task.ownerOpenid) !== expected.openid ||
+    normalizeString(task.workId) !== expected.workId ||
+    normalizeString(task.reservationId) !== expected.reservationId ||
+    normalizeString(task.operationType) !== expected.operationType ||
+    (!existingClientRequestId && !options.allowMissingClientRequestId) ||
+    (!options.allowClientRequestIdMismatch &&
+      existingClientRequestId &&
+      existingClientRequestId !== expected.clientRequestId)
   ) {
-    throw new BusinessError("OPTIMIZE_RESERVATION_CONFLICT", "该预占已经绑定到另一个作品或生成类型");
+    throw new BusinessError(
+      "GENERATION_REQUEST_CONFLICT",
+      "该请求编号已经用于另一项生成操作，请刷新页面后重试。"
+    );
   }
 }
 
@@ -253,21 +283,16 @@ function logTransactionFailure(logger, details, error) {
   logger.error("startGenerationTask transaction failed", {
     functionName: "startGenerationTask",
     openid: details.openid ? createSafeDocId("user", details.openid).slice(-12) : "",
+    clientRequestId: details.clientRequestId || "",
     reservationId: details.reservationId || "",
     taskId: details.taskId || "",
     workId: details.workId || "",
-    errorCode: error && error.errorCode ? error.errorCode : "OPTIMIZE_QUOTA_TRANSACTION_FAILED",
+    errorCode: error && error.errorCode ? error.errorCode : "GENERATION_TASK_CREATE_FAILED",
     message: error && error.message ? error.message : String(error)
   });
 }
 
-function createStartGenerationTaskHandler({
-  cloud,
-  db,
-  now = () => new Date(),
-  createTaskId = createDefaultTaskId,
-  logger = console
-}) {
+function createStartGenerationTaskHandler({ cloud, db, now = () => new Date(), logger = console }) {
   if (RESERVATION_TTL_MS < GENERATION_TASK_TIMEOUT_MS) {
     throw new Error("RESERVATION_TTL_MS must not be shorter than GENERATION_TASK_TIMEOUT_MS");
   }
@@ -275,115 +300,185 @@ function createStartGenerationTaskHandler({
   return async function startGenerationTask(event = {}) {
     const context = cloud.getWXContext();
     const openid = normalizeString(context && context.OPENID);
+    const clientRequestId = normalizeString(event.clientRequestId);
     const workId = normalizeString(event.workId);
     const operationType = normalizeString(event.operationType);
     const reservationId = normalizeString(event.reservationId);
-    const taskId = createTaskId();
-    const logDetails = {
+    const taskId =
+      openid && operationType && clientRequestId
+        ? getGenerationTaskDocId(openid, operationType, clientRequestId)
+        : "";
+    const expectedTask = {
       openid,
-      reservationId,
-      taskId,
-      workId
+      clientRequestId,
+      workId,
+      operationType,
+      reservationId
+    };
+    const logDetails = {
+      ...expectedTask,
+      taskId
+    };
+    const readExistingTask = async () => {
+      const existingResult = await db.runTransaction(async (transaction) => {
+        const latestResult = await transaction.collection("generationTasks").doc(taskId).get();
+        const latestTask = latestResult.data || null;
+        if (!latestTask) {
+          return null;
+        }
+        verifyExistingTask(latestTask, expectedTask);
+        return {
+          task: toTaskResponse(latestTask),
+          duplicated: true
+        };
+      });
+      return unwrapTransactionResult(existingResult);
     };
 
     try {
-      if (!openid || !workId || !ALLOWED_OPERATION_TYPES.has(operationType)) {
-        throw new BusinessError("GENERATION_TASK_INVALID_PAYLOAD", "生成任务参数不完整，请返回后重试");
+      if (!openid) {
+        throw new BusinessError("GENERATION_TASK_INVALID_PAYLOAD", "生成任务用户信息无效，请重新登录后重试。");
+      }
+      if (!clientRequestId) {
+        throw new BusinessError("CLIENT_REQUEST_ID_REQUIRED", "生成请求编号缺失，请返回后重试。");
+      }
+      if (!workId || !ALLOWED_OPERATION_TYPES.has(operationType)) {
+        throw new BusinessError("GENERATION_TASK_INVALID_PAYLOAD", "生成任务参数不完整，请返回后重试。");
       }
       if (OPTIMIZE_OPERATION_TYPES.has(operationType) && !reservationId) {
-        throw new BusinessError("GENERATION_TASK_INVALID_PAYLOAD", "优化生成任务缺少预占编号，请返回结果页重试");
+        throw new BusinessError("GENERATION_TASK_INVALID_PAYLOAD", "优化生成任务缺少预占编号，请返回结果页重试。");
       }
 
-      const workResult = await db.collection("works").where({
-        ownerOpenid: openid,
-        workId
-      }).limit(1).get();
-      const work = workResult.data && workResult.data[0];
-      if (operationType !== "initial" && (!work || work.status === "deleted")) {
-        throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试");
-      }
-      if (work && work.status === "deleted") {
-        throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试");
-      }
-
-      const assetsResult = await db.collection("uploadAssets").where({
-        ownerOpenid: openid,
-        workId,
-        status: "active"
-      }).limit(20).get();
-      const activeAssets = assetsResult.data || [];
-      const taskNow = now();
-
-      if (operationType === "initial") {
-        validateTaskInputs(operationType, work, activeAssets);
-        const task = buildTask({
-          openid,
-          workId,
-          operationType,
-          reservationId: "",
-          dimensionSet: normalizeArray(event.dimensionSet),
-          activeAssets,
-          work,
-          event,
-          taskId,
-          now: taskNow
-        });
-        await db.collection("generationTasks").add({
-          data: task
-        });
+      const existingDeterministicTask = await readExistingTask();
+      if (existingDeterministicTask) {
         return {
           ok: true,
-          data: {
-            task: toTaskResponse(task),
-            duplicated: false
-          }
+          data: existingDeterministicTask
         };
       }
 
-      const result = await db.runTransaction(async (transaction) => {
-        const reservationRef = transaction
-          .collection("optimizeReservations")
-          .doc(getReservationDocId(openid, reservationId));
-        const reservationResult = await reservationRef.get();
-        const reservation = reservationResult.data || null;
-
-        if (!reservation) {
-          throw new BusinessError("OPTIMIZE_RESERVATION_NOT_FOUND", "优化预占记录不存在，请返回结果页重试");
+      let work = null;
+      let activeAssets = [];
+      try {
+        const workResult = await db
+          .collection("works")
+          .where({
+            ownerOpenid: openid,
+            workId
+          })
+          .limit(1)
+          .get();
+        work = workResult.data && workResult.data[0];
+        if (operationType !== "initial" && (!work || work.status === "deleted")) {
+          throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试。");
         }
-        if (
-          normalizeString(reservation.openid) !== openid ||
-          normalizeString(reservation.workId) !== workId ||
-          normalizeString(reservation.source) !== OPERATION_SOURCE_MAP[operationType]
-        ) {
-          throw new BusinessError("OPTIMIZE_RESERVATION_CONFLICT", "预占记录与作品或生成类型不匹配");
-        }
-        if (reservation.status !== "reserved") {
-          throw new BusinessError("OPTIMIZE_RESERVATION_CONFLICT", "预占记录已结束，不能再创建生成任务");
+        if (work && work.status === "deleted") {
+          throw new BusinessError("GENERATION_TASK_WORK_NOT_FOUND", "作品不存在或已失效，请返回作品页刷新后重试。");
         }
 
-        const boundTaskId = normalizeString(reservation.taskId);
-        if (boundTaskId) {
-          const existingTaskResult = await transaction.collection("generationTasks").doc(boundTaskId).get();
-          const existingTask = existingTaskResult.data || null;
-          if (!existingTask) {
-            throw new BusinessError("OPTIMIZE_GENERATION_TASK_NOT_FOUND", "预占已经绑定任务，但对应生成任务不存在");
+        const assetsResult = await db
+          .collection("uploadAssets")
+          .where({
+            ownerOpenid: openid,
+            workId,
+            status: "active"
+          })
+          .limit(20)
+          .get();
+        activeAssets = assetsResult.data || [];
+        validateTaskInputs(operationType, work, activeAssets);
+      } catch (inputError) {
+        if (inputError && inputError.isBusinessError) {
+          const racedTask = await readExistingTask();
+          if (racedTask) {
+            return {
+              ok: true,
+              data: racedTask
+            };
           }
-          verifyExistingTask(existingTask, reservation, openid, workId, operationType);
+        }
+        throw inputError;
+      }
+      const taskNow = now();
+
+      const result = await db.runTransaction(async (transaction) => {
+        const taskRef = transaction.collection("generationTasks").doc(taskId);
+        const existingTaskResult = await taskRef.get();
+        const existingTask = existingTaskResult.data || null;
+        if (existingTask) {
+          verifyExistingTask(existingTask, expectedTask);
           return {
             task: toTaskResponse(existingTask),
             duplicated: true
           };
         }
 
-        const expiresAt = normalizeDate(reservation.expiresAt);
-        if (!expiresAt || expiresAt.getTime() <= taskNow.getTime()) {
-          throw new BusinessError("OPTIMIZE_RESERVATION_EXPIRED", "优化预占已经过期，请返回结果页重新提交");
+        let reservationRef = null;
+        let reservation = null;
+        if (OPTIMIZE_OPERATION_TYPES.has(operationType)) {
+          reservationRef = transaction
+            .collection("optimizeReservations")
+            .doc(getReservationDocId(openid, reservationId));
+          const reservationResult = await reservationRef.get();
+          reservation = reservationResult.data || null;
+
+          if (!reservation) {
+            throw new BusinessError("OPTIMIZE_RESERVATION_NOT_FOUND", "优化预占记录不存在，请返回结果页重试。");
+          }
+          if (
+            normalizeString(reservation.openid) !== openid ||
+            normalizeString(reservation.workId) !== workId ||
+            normalizeString(reservation.source) !== OPERATION_SOURCE_MAP[operationType]
+          ) {
+            throw new BusinessError("OPTIMIZE_RESERVATION_CONFLICT", "预占记录与作品或生成类型不匹配。");
+          }
+          if (reservation.status !== "reserved") {
+            throw new BusinessError("OPTIMIZE_RESERVATION_CONFLICT", "预占记录已结束，不能再创建生成任务。");
+          }
+
+          const boundTaskId = normalizeString(reservation.taskId);
+          if (boundTaskId) {
+            const boundTaskRef = transaction.collection("generationTasks").doc(boundTaskId);
+            const boundTaskResult = await boundTaskRef.get();
+            const boundTask = boundTaskResult.data || null;
+            if (!boundTask) {
+              throw new BusinessError(
+                "OPTIMIZE_GENERATION_TASK_NOT_FOUND",
+                "预占已经绑定任务，但对应生成任务不存在。"
+              );
+            }
+            verifyExistingTask(boundTask, expectedTask, {
+              allowClientRequestIdMismatch: true,
+              allowMissingClientRequestId: true
+            });
+            if (!normalizeString(boundTask.clientRequestId)) {
+              await boundTaskRef.update({
+                data: {
+                  clientRequestId,
+                  updatedAt: taskNow
+                }
+              });
+              boundTask.clientRequestId = clientRequestId;
+              boundTask.updatedAt = taskNow;
+            }
+            return {
+              task: toTaskResponse(boundTask),
+              duplicated: true
+            };
+          }
+
+          const expiresAt = normalizeDate(reservation.expiresAt);
+          if (!expiresAt || expiresAt.getTime() <= taskNow.getTime()) {
+            throw new BusinessError("OPTIMIZE_RESERVATION_EXPIRED", "优化预占已经过期，请返回结果页重新提交。");
+          }
         }
 
-        validateTaskInputs(operationType, work, activeAssets);
-        const dimensionSet = normalizeArray(reservation.dimensionSet);
+        const dimensionSet = reservation
+          ? normalizeArray(reservation.dimensionSet)
+          : normalizeArray(event.dimensionSet);
         const task = buildTask({
           openid,
+          clientRequestId,
           workId,
           operationType,
           reservationId,
@@ -398,13 +493,15 @@ function createStartGenerationTaskHandler({
         await transaction.collection("generationTasks").doc(taskId).set({
           data: withoutId(task)
         });
-        await reservationRef.update({
-          data: {
-            taskId,
-            boundAt: taskNow,
-            updatedAt: taskNow
-          }
-        });
+        if (reservationRef) {
+          await reservationRef.update({
+            data: {
+              taskId,
+              boundAt: taskNow,
+              updatedAt: taskNow
+            }
+          });
+        }
 
         return {
           task: toTaskResponse(task),
@@ -426,7 +523,7 @@ function createStartGenerationTaskHandler({
         errorCode: OPTIMIZE_OPERATION_TYPES.has(operationType)
           ? "OPTIMIZE_QUOTA_TRANSACTION_FAILED"
           : "GENERATION_TASK_CREATE_FAILED",
-        message: "生成任务创建失败，请稍后重试"
+        message: "生成任务创建失败，请稍后重试。"
       };
     }
   };
@@ -441,6 +538,7 @@ module.exports = {
   buildTask,
   createSafeDocId,
   createStartGenerationTaskHandler,
+  getGenerationTaskDocId,
   getReservationDocId,
   toTaskResponse,
   validateTaskInputs,

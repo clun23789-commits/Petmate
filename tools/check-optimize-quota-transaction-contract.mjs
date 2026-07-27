@@ -201,7 +201,7 @@ const timeoutFiles = [
   "cloudfunctions/cleanupExpiredOptimizeReservations/core.js"
 ];
 const timeoutValues = timeoutFiles.map((relativePath) => readConstant(relativePath, "GENERATION_TASK_TIMEOUT_MS"));
-const pollTimeout = readConstant("cloudfunctions/pollGenerationTask/index.js", "TASK_TIMEOUT_MS");
+const pollTimeout = readConstant("cloudfunctions/pollGenerationTask/core.js", "TASK_TIMEOUT_MS");
 
 if (ttlValues.some((value) => value === null) || new Set(ttlValues).size !== 1) {
   failures.push("reservation TTL constants must exist and match across reserve/start/cleanup");

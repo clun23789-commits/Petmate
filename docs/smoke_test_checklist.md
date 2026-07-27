@@ -135,10 +135,20 @@
 - [ ] 已删除作品不能重新保存为可见作品。
 ## S9：第 3 阶段生成任务系统
 
+- [ ] 同一 `clientRequestId` 顺序或并发提交多次只创建一个确定性 `generationTasks` 文档，并返回同一个 `taskId`；更换 `clientRequestId` 可创建新任务。
+- [ ] 同一 `clientRequestId` 改变 `workId / operationType / reservationId` 时返回 `GENERATION_REQUEST_CONFLICT`。
+- [ ] 模拟创建任务服务端成功但客户端超时，再次提交后返回 `duplicated = true`，本地恢复引用补写原 `taskId`。
+- [ ] optimize / targeted_upload 在应用重启后复用本地恢复引用中的 `reservationId`，不重复预占优化次数。
+- [ ] 对同一 pending 任务并发发起 20 次轮询，只有一个请求增加 `revision` 并推进阶段，其余请求只读返回 `GENERATION_TASK_LOCKED` 状态。
+- [ ] 未过期处理锁不会被覆盖；锁过期后新 token 可恢复，旧 token 和旧 revision 都不能继续写入。
 - [ ] 初始上传生成成功后，`generationTasks.status = success`，`phase = completed`，`providerStatus = succeeded`。
 - [ ] 成功任务返回 `cloudFinalized = true`，且 `resultSaveStatus = success`。
 - [ ] 成功任务已由云函数写入 `works.currentVersionId` 与对应 `workVersions.versionId`。
 - [ ] 对同一个成功 `taskId` 重复调用 `pollGenerationTask` 不会重复创建版本，也不会重复追加相同 `versionId`。
+- [ ] success / failed 任务重复轮询完全只读，不更新 `updatedAt / lastProcessedAt / revision`。
+- [ ] finalizing 并发轮询只产生一个作品和一个版本；作品、版本、任务成功状态在同一事务可见。
+- [ ] 分别注入版本写入、作品写入和任务成功写入失败，确认最终事务回滚且不存在半成功数据。
+- [ ] 已删除作品不能被 finalizing 恢复；legacy work/version 文档仍按原 `_id` 更新。
 - [ ] 生成中刷新或退出后重新进入等待页，会立即轮询一次并恢复结果。
 - [ ] `simulateFailure` 能进入 `failed`，并写入非空 `failureCode / failureCategory / failureReason`。
 - [ ] 构造过期 `createdAt` 或临时缩短 timeout 后，任务进入 `phase = timeout` 且 `failureCode = GENERATION_TASK_TIMEOUT`。

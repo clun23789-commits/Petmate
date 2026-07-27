@@ -1,6 +1,6 @@
 # Petmate Current Status
 
-当前源码包基线为 `petmate-mini1.5.0`。本说明用于同步截至 2026-07-27 的代码与文档认知边界。
+当前源码包基线为 `petmate-mini1.5.0`。本说明用于同步截至 2026-07-28 的代码与文档认知边界。
 
 当前开发仍以以下三份文档为依据：
 
@@ -35,6 +35,8 @@
 作品生成后端当前保留基础生成流程：上传素材后创建 `generationTasks`，轮询推进到云端保存 `works / workVersions`，并返回结果页所需的基础 `previewMedia` 与 `editableTexture.notes`。真实识别、真实广告、真实微信支付、真实 AR 仍未接入。
 
 P0-01 已在源码中完成优化次数事务化：`reserveOptimizeQuota / commitOptimizeQuota / releaseOptimizeQuota` 原子更新预占与汇总，`startGenerationTask` 原子绑定 reservation 与任务；预占记录新增 `expiresAt / boundAt / releaseReason`，并新增 `cleanupExpiredOptimizeReservations` 用于定时恢复过期记录。前端轮询网络异常不再释放次数，结果页与定向补图页具备提交锁，flow 层使用单飞保护。
+
+P0 生成任务幂等与并发锁已在源码中完成：`startGenerationTask` 要求持久化 `clientRequestId` 并用确定性 `_id` 在事务内创建任务；`pollGenerationTask` 使用 60 秒处理锁、token 和 revision 防止并发推进，最终在单个事务内提交 `works / workVersions / generationTasks`。客户端只持久化最小请求引用并可在网络超时或应用重启后找回原任务；相关云函数和小程序仍需按部署清单在目标测试环境手动部署、真机验证。
 
 清理云函数源码已增加客户端调用隔离：带普通用户 `OPENID` 的请求会在数据库扫描前被拒绝；成功响应只返回汇总数字，失败日志中的用户、预占、任务和作品标识使用 12 位哈希引用。development 已完成清理云函数、函数安全规则、`idx_status_expires` 索引和每 10 分钟定时触发器配置；staging 尚未独立部署，production 尚未部署。
 

@@ -76,9 +76,14 @@ revoked
 - 第一批不大规模重构错误模型；如 service wrapper 需要包装错误，应给出明确可读的失败信息。
 ## 第 3 阶段：生成任务恢复策略
 
+- 客户端提交前将最小恢复引用写入 `petmate.generationRequests.v1`：只保存 `clientRequestId / workId / operationType / reservationId / taskId / createdAt`，不保存作品或版本结果。
+- 创建任务响应丢失或网络超时时不清理恢复引用、不释放 reservation；重试必须复用同一 `clientRequestId`，由服务端返回原任务。成功或明确不可恢复失败后才清理。
+- optimize / targeted_upload 重新进入时优先复用恢复引用中的 `reservationId`，避免应用重启后再次预占并创建另一任务。
+- 轮询处理者异常退出时依赖 60 秒处理锁过期恢复；旧 `processingToken` 或旧 `revision` 的写入必须被拒绝。
+- `finalizing` 恢复继续使用已保存的 `resultSnapshot / targetVersionId`，不重新构造另一版本。
 - 输入无效：`generationTasks.failureCategory = "input"`，前端按生成失败恢复页展示，并引导用户重新上传或补充素材。
 - 任务超时：`phase = "timeout"`、`status = "failed"`、`providerStatus = "timeout"`、`failureCode = "GENERATION_TASK_TIMEOUT"`，前端按失败处理，提示稍后重试。
 - 结果无效：`failureCode = "GENERATION_RESULT_INVALID"`，任务不得返回 `success`；如果关联优化预占，仍由现有前端失败路径释放 reservation。
-- 结果落库失败：`works / workVersions` finalize 失败时，任务不得返回 `success`；应写入 `resultSaveStatus = "failed"`、`failureCategory = "save"`，避免用户进入不可恢复的结果页。
+- 结果落库失败：`works / workVersions / generationTasks` 最终事务整体回滚，任务不得返回 `success`；随后持锁失败路径写入 `resultSaveStatus = "failed"`、`failureCategory = "save"`，避免用户进入半成功结果页。
 - 云端落库成功：`resultSaveStatus = "success"`、`finalizedWorkId = workId`、`finalizedVersionId = targetVersionId`，前端只同步本地 store，不再重复调用 `saveWork`。
 - 旧版本的本地 upsert + `saveCurrentWorkToCloud` 兜底路径仅作为兼容历史任务的保护，不是当前推荐路径。

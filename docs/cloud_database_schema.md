@@ -147,8 +147,9 @@
 保存用户每一次基础作品生成或优化生成任务。当前任务由云函数内置基础流程推进，`provider` 固定为 `basic_generation`。
 ```js
 {
-  _id: "task-xxx",
-  taskId: "task-xxx",
+  _id: "generation_task_<owner + operationType + clientRequestId 的安全编码>",
+  taskId: "与 _id 相同",
+  clientRequestId: "generation-request-xxx",
   ownerOpenid: "微信 openid",
   workId: "work-xxx",
 
@@ -181,6 +182,12 @@
   finalizedWorkId: "",
   finalizedVersionId: "",
 
+  revision: 0,
+  processingToken: "",
+  processingStartedAt: null,
+  processingExpiresAt: null,
+  lastProcessedAt: null,
+
   createdAt: Date,
   updatedAt: Date,
   completedAt: null,
@@ -190,10 +197,13 @@
 
 规则：
 - `ownerOpenid` 必须由云函数根据 `cloud.getWXContext()` 写入，前端传入值不能覆盖。
+- `clientRequestId` 必填；同一用户、同一操作类型和同一 `clientRequestId` 使用确定性任务 `_id`。参数一致的重复提交返回原任务，参数变化返回 `GENERATION_REQUEST_CONFLICT`。
 - 生成任务只能由当前用户查询，`pollGenerationTask` 必须校验 `ownerOpenid === OPENID`。
 - 新任务的 `provider` 固定为 `basic_generation`，不读取额外生成服务环境变量。
 - 生成任务提交和结果查询继续使用前端 `services/generation` 的统一入口。
-- `pollGenerationTask` 会由云端幂等 finalize 到 `works` 和 `workVersions`；返回 `cloudFinalized = true` 时，前端只同步本地 store，不再调用 `saveCurrentWorkToCloud`。
+- `pollGenerationTask` 每次推进前在事务中获取 60 秒处理锁并增加 `revision`；未过期锁只读返回，过期锁允许新请求恢复。每次持锁写入都必须重新校验 `processingToken + revision`。
+- `pollGenerationTask` 会在一个事务内 finalize `works`、`workVersions` 和任务成功状态；返回 `cloudFinalized = true` 时，前端只同步本地 store，不再调用 `saveCurrentWorkToCloud`。
+- 生成 finalize 创建的新作品使用 `works._id = ownerOpenid + workId` 的安全编码，新版本使用 `workVersions._id = ownerOpenid + versionId` 的安全编码；已有 legacy 文档继续按原 `_id` 更新，不在本阶段自动迁移或删除。
 - `initial` 任务必须至少存在一个归属当前用户、`status = active`、`role = initial` 的上传素材；正脸、侧面、全身是推荐结构，不是强制三张上传。
 - `targeted_upload` 任务必须校验当前作品归属，并至少存在一个 `role = targeted` 的 active 上传素材。
 - `optimize` 任务必须校验当前作品归属，但不强制要求本轮新增上传素材。
@@ -540,6 +550,7 @@ The current generation task does not call external recognition or generation ser
 ```js
 {
   taskId: "task-xxx",
+  clientRequestId: "generation-request-xxx",
   ownerOpenid: "openid",
   workId: "work-xxx",
   operationType: "initial / optimize / targeted_upload",
@@ -572,6 +583,11 @@ The current generation task does not call external recognition or generation ser
   finalizedVersionId: "",
   simulateFailure: false,
   pollCount: 0, // legacy compatibility only; not used as the main state machine
+  revision: 0,
+  processingToken: "",
+  processingStartedAt: null,
+  processingExpiresAt: null,
+  lastProcessedAt: null,
   createdAt: Date,
   updatedAt: Date,
   completedAt: null,
@@ -583,7 +599,9 @@ The current generation task does not call external recognition or generation ser
 
 `targetVersionId` is created by `startGenerationTask` and must remain stable when the result is saved. `pollCount` is retained only for historical compatibility and must not drive the main `pollGenerationTask` state machine.
 
-After success, `pollGenerationTask` finalizes `works / workVersions` idempotently in the cloud. `resultSaveStatus === "success"` means the work and version have been persisted. Repeated polling of a successful task should return `cloudFinalized = true` without creating duplicate versions or appending duplicate `works.versionIds`.
+`startGenerationTask` requires a persisted `clientRequestId` and creates a deterministic task document. `pollGenerationTask` uses a 60-second processing lease plus `revision`; stale tokens cannot update a task after the lease is recovered.
+
+After success, `pollGenerationTask` finalizes `works / workVersions / generationTasks` atomically in the cloud. `resultSaveStatus === "success"` means the work and version have been persisted in the same transaction as the task terminal state. Repeated polling of a successful task should return `cloudFinalized = true` without creating duplicate versions or appending duplicate `works.versionIds`.
 
 A basic completed version includes at least:
 
