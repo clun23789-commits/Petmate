@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "statusPolicy": {
+    "readyValues": ["ready", "normal", "active", "available"],
+    "buildingValues": ["building", "creating", "pending", "initializing"],
+    "unknown": "warning"
+  },
+  "systemIndexes": [
+    {
+      "name": "_id_",
+      "required": true,
+      "unique": true,
+      "keys": [
+        { "name": "_id", "direction": 1 }
+      ]
+    },
+    {
+      "name": "_openid_1",
+      "required": true,
+      "unique": false,
+      "keys": [
+        { "name": "_openid", "direction": 1 }
+      ]
+    }
+  ],
+  "collections": {
+    "works": [
+      {
+        "name": "idx_owner_work",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_owner_status_updated",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "status", "direction": 1 },
+          { "name": "updatedAt", "direction": -1 }
+        ]
+      }
+    ],
+    "workVersions": [
+      {
+        "name": "idx_owner_work_status_created",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "status", "direction": 1 },
+          { "name": "createdAt", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_owner_version",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "versionId", "direction": 1 }
+        ]
+      }
+    ],
+    "shares": [
+      {
+        "name": "idx_share_status",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "shareId", "direction": 1 },
+          { "name": "status", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_owner_work_status",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "status", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_owner_work_version_status",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "sourceVersionId", "direction": 1 },
+          { "name": "status", "direction": 1 }
+        ]
+      }
+    ],
+    "uploadAssets": [
+      {
+        "name": "idx_owner_work_created",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "createdAt", "direction": -1 }
+        ]
+      }
+    ],
+    "generationTasks": [
+      {
+        "name": "idx_owner_task",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "taskId", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_owner_work_status_updated",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "status", "direction": 1 },
+          { "name": "updatedAt", "direction": -1 }
+        ]
+      }
+    ],
+    "optimizeQuotas": [
+      {
+        "name": "idx_openid",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 }
+        ]
+      }
+    ],
+    "optimizeQuotaGrants": [
+      {
+        "name": "idx_openid_idempotency",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "idempotencyKey", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_openid_scene_created",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "rewardScene", "direction": 1 },
+          { "name": "createdAt", "direction": -1 }
+        ]
+      }
+    ],
+    "optimizeReservations": [
+      {
+        "name": "idx_openid_reservation",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "reservationId", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_openid_work_status_updated",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "status", "direction": 1 },
+          { "name": "updatedAt", "direction": -1 }
+        ]
+      },
+      {
+        "name": "idx_status_expires",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "status", "direction": 1 },
+          { "name": "expiresAt", "direction": 1 }
+        ]
+      }
+    ],
+    "users": [
+      {
+        "name": "idx_openid",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 }
+        ]
+      }
+    ],
+    "orders": [
+      {
+        "name": "idx_openid_order",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "orderId", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_openid_work_product_status",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "productType", "direction": 1 },
+          { "name": "status", "direction": 1 }
+        ]
+      }
+    ],
+    "arEntitlements": [
+      {
+        "name": "idx_openid_work_status",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "workId", "direction": 1 },
+          { "name": "status", "direction": 1 }
+        ]
+      }
+    ],
+    "adRewardGrants": [
+      {
+        "name": "idx_openid_idempotency",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "idempotencyKey", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_openid_client_scene",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "clientRewardId", "direction": 1 },
+          { "name": "rewardScene", "direction": 1 }
+        ]
+      },
+      {
+        "name": "idx_openid_scene_created",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "rewardScene", "direction": 1 },
+          { "name": "createdAt", "direction": -1 }
+        ]
+      },
+      {
+        "name": "idx_openid_status_expires",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "status", "direction": 1 },
+          { "name": "expiresAt", "direction": 1 }
+        ]
+      }
+    ]
+  }
+}

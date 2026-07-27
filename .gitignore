@@ -22,3 +22,6 @@ project.private.config.json
 *.pfx
 *.jks
 *.keystore
+.tcb/
+.tencentcloud/
+cloud-index-credentials*.json

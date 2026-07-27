@@ -37,5 +37,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run cloud index comparison tests
+        run: npm run test:cloud-indexes
+
       - name: Run project checks
         run: npm run check

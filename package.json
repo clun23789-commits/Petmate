@@ -18,6 +18,9 @@
     "test:generation-idempotency": "node --test tests/generation-idempotency/*.test.mjs",
     "test:save-work": "node --test tests/save-work/*.test.mjs",
     "check:save-work": "node ./tools/check-save-work-contract.mjs",
+    "test:cloud-indexes": "node --test tests/cloud-indexes/*.test.mjs",
+    "check:cloud-indexes": "node ./tools/check-cloud-indexes.mjs",
+    "check:deployment": "npm run check:cloud-indexes",
     "test:optimize-quota": "node --test tests/optimize-quota/*.test.mjs",
     "check:optimize-quota-transaction": "node ./tools/check-optimize-quota-transaction-contract.mjs",
     "test:ad-reward": "node --test tests/ad-reward/*.test.mjs",
@@ -25,6 +28,12 @@
     "test:payment-security": "node --test tests/payment/*.test.mjs",
     "check:production-readiness": "node ./tools/check-production-readiness.mjs",
     "check": "npm run check:structure && npm run check:page-structure && npm run check:product && npm run check:mock-boundary && npm run check:auth && npm run check:runtime-config && npm run check:generation-task && npm run test:generation-idempotency && npm run test:save-work && npm run check:save-work && npm run test:optimize-quota && npm run check:optimize-quota-transaction && npm run test:ad-reward && npm run check:ad-reward-settlement && npm run test:payment-security && npm run build:miniprogram",
-    "release:precheck": "npm run check && npm run check:production-readiness"
+    "release:precheck": "npm run check && npm run check:deployment && npm run check:production-readiness"
+  },
+  "devDependencies": {
+    "tencentcloud-sdk-nodejs-tcb": "4.1.266"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
   }
 }

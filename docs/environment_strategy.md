@@ -49,8 +49,11 @@ npm run env:development
 npm run env:staging
 npm run check
 npm run check:production-readiness
+npm run check:deployment
 npm run release:precheck
 ```
+
+`check:deployment` 需要显式设置 `TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY / PETMATE_CLOUD_ENV_ID`，并使用只读 CAM 子账号核对真实 CloudBase 集合与索引；该在线检查不属于普通离线 `npm run check`。
 
 生产环境生成必须显式提供云环境 ID：
 
@@ -110,7 +113,7 @@ production 配置严格不等于 production 已就绪。当前真实 AR、catalo
 npm run release:precheck
 ```
 
-该命令会先运行普通工程检查，再运行 production readiness。当前阶段整体应失败，失败原因必须来自 production 真实服务缺口。
+该命令会先运行普通工程检查，再运行真实 CloudBase 索引只读检查和 production readiness。运行前必须提供只读腾讯云凭证与目标生产环境 ID。当前阶段整体应失败，失败原因必须来自 production 真实服务缺口或真实部署资源不满足机器索引事实源。
 
 不要为了让 readiness 通过而把 production 改成 `mock` 或 fallback。`tools/check-runtime-config.mjs` 和 `tools/check-production-readiness.mjs` 都会检查 production 服务矩阵。
 
