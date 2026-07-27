@@ -1,22 +1,24 @@
 # Petmate 云数据库索引人工核对清单
 
-> 本清单是 `docs/cloud_database_indexes.md` 的人工执行入口，不维护索引字段明细。索引名称、字段顺序、排序方向和状态以 `docs/cloud_database_indexes.md` 为唯一事实源。
+> 本清单用于处理自动检查发现的问题，不维护索引字段明细。索引名称、字段顺序、排序方向、unique 和必需状态以 `config/cloud-database-indexes.json` 为唯一事实源。
 
 ## 使用说明
 
-- 本清单用于换环境、上线前、云环境重建后的人工核对。
-- Codex 不能替代人工在微信云开发控制台创建索引。
-- 核对前先确认 `miniprogram/config/env.generated.js` 的 `SELECTED_APP_ENV`，避免在错误云环境里创建索引。
-- staging / production 如果使用不同云环境，必须分别人工核对索引；不能把 development 的检查结果直接视为 production 通过。
-- 所有业务索引均按 `cloud_database_indexes.md` 中记录的“非唯一”要求创建，不要误建为唯一索引。
+- 本清单用于换环境、上线前、云环境重建后或自动检查失败后的人工修正。
+- 自动脚本只读；Codex 不能替代人工在微信云开发控制台创建、修改或删除索引。
+- 操作前同时核对 `PETMATE_CLOUD_ENV_ID`、`PETMATE_APP_ENV` 和控制台环境，避免修正错误环境。
+- development / staging / production 必须分别运行真实检查，不能复用另一个环境的结论。
+- 所有索引按机器 JSON 中的 `unique` 和有序 `keys` 创建，不要仅凭字段集合判断。
 
 ## 核对步骤
 
-- [ ] 打开微信云开发控制台，确认当前云环境 ID 与小程序 `ENV_CONFIG.cloudEnvId` 一致。
-- [ ] 对照 `docs/cloud_database_indexes.md` 第 16 节“当前索引汇总”，逐项核对集合、索引名称、字段顺序、排序方向和非唯一属性。
-- [ ] 对照 `docs/cloud_database_indexes.md` 各集合“注意事项”，确认 `openid` 与 `ownerOpenid` 没有混用。
-- [ ] 确认默认索引 `_id_` 与 `_openid_1` 存在且未被删除。
-- [ ] 如新建或修正索引，在 `docs/cloud_database_indexes.md` 中更新对应云环境、日期和状态。
+- [ ] 使用只读 CAM 子账号设置 `TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY / PETMATE_CLOUD_ENV_ID`。
+- [ ] 运行 `npm run check:cloud-indexes`，保存缺失、错误和告警清单；不要保存或转发 Secret。
+- [ ] 打开 CloudBase 控制台，确认当前环境 ID 与命令输出完全一致。
+- [ ] 对照 `config/cloud-database-indexes.json` 逐项修正集合、索引名称、字段顺序、排序方向和 unique。
+- [ ] 确认默认索引 `_id_` 与 `_openid_1` 存在且属性正确。
+- [ ] 修正完成后重新运行 `npm run check:cloud-indexes`；必要索引必须全部通过，多余索引需人工判断是否保留。
+- [ ] 不在本流程中修改 JSON 来迁就错误的远端状态；确需变更产品索引要求时单独评审机器事实源。
 
 ## 集合核对入口
 
@@ -37,4 +39,4 @@
 
 - [ ] `users`、`orders`、`optimize*`、`adRewardGrants` 使用 `openid`。
 - [ ] `works`、`workVersions`、`uploadAssets`、`shares`、`generationTasks` 使用 `ownerOpenid`。
-- [ ] `arEntitlements` 同时保存 `openid` 与 `ownerOpenid`，索引定义按 `cloud_database_indexes.md` 执行。
+- [ ] `arEntitlements` 同时保存 `openid` 与 `ownerOpenid`，索引定义按机器 JSON 执行。

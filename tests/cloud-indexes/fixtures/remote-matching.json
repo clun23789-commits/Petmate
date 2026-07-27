@@ -1,0 +1,68 @@
+{
+  "environment": {
+    "envId": "test-env",
+    "region": "ap-shanghai"
+  },
+  "Tables": [
+    {
+      "TableName": "works",
+      "Indexes": [
+        {
+          "Name": "_id_",
+          "Unique": true,
+          "Status": "READY",
+          "Keys": [
+            { "Name": "_id", "Direction": "1" }
+          ]
+        },
+        {
+          "Name": "_openid_1",
+          "Unique": false,
+          "Status": "READY",
+          "Keys": [
+            { "Name": "_openid", "Direction": "1" }
+          ]
+        },
+        {
+          "Name": "idx_owner_work",
+          "Unique": false,
+          "Status": "READY",
+          "Keys": [
+            { "Name": "ownerOpenid", "Direction": "1" },
+            { "Name": "workId", "Direction": "1" }
+          ]
+        }
+      ]
+    },
+    {
+      "TableName": "orders",
+      "Indexes": [
+        {
+          "Name": "_id_",
+          "Unique": true,
+          "Status": "READY",
+          "Keys": [
+            { "Name": "_id", "Direction": "1" }
+          ]
+        },
+        {
+          "Name": "_openid_1",
+          "Unique": false,
+          "Status": "READY",
+          "Keys": [
+            { "Name": "_openid", "Direction": "1" }
+          ]
+        },
+        {
+          "Name": "idx_openid_order",
+          "Unique": false,
+          "Status": "READY",
+          "Keys": [
+            { "Name": "openid", "Direction": "1" },
+            { "Name": "orderId", "Direction": "1" }
+          ]
+        }
+      ]
+    }
+  ]
+}

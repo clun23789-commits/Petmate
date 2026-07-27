@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "statusPolicy": {
+    "readyValues": ["ready"],
+    "buildingValues": ["building", "creating"],
+    "unknown": "warning"
+  },
+  "systemIndexes": [
+    {
+      "name": "_id_",
+      "required": true,
+      "unique": true,
+      "keys": [
+        { "name": "_id", "direction": 1 }
+      ]
+    },
+    {
+      "name": "_openid_1",
+      "required": true,
+      "unique": false,
+      "keys": [
+        { "name": "_openid", "direction": 1 }
+      ]
+    }
+  ],
+  "collections": {
+    "works": [
+      {
+        "name": "idx_owner_work",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "ownerOpenid", "direction": 1 },
+          { "name": "workId", "direction": 1 }
+        ]
+      }
+    ],
+    "orders": [
+      {
+        "name": "idx_openid_order",
+        "required": true,
+        "unique": false,
+        "keys": [
+          { "name": "openid", "direction": 1 },
+          { "name": "orderId", "direction": 1 }
+        ]
+      }
+    ]
+  }
+}

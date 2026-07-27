@@ -1,0 +1,47 @@
+{
+  "environment": {
+    "EnvList": [
+      {
+        "EnvId": "test-env",
+        "Status": "NORMAL",
+        "Region": "ap-shanghai",
+        "Databases": [
+          {
+            "InstanceId": "tnt-test",
+            "Status": "RUNNING",
+            "Region": "ap-shanghai"
+          }
+        ]
+      }
+    ]
+  },
+  "tables": {
+    "Tables": [
+      {
+        "TableName": "works",
+        "Count": 1,
+        "IndexCount": 1
+      }
+    ],
+    "Pager": {
+      "Offset": 0,
+      "Limit": 100,
+      "Total": 1
+    }
+  },
+  "workDetail": {
+    "Indexes": [
+      {
+        "Name": "_id_",
+        "Unique": true,
+        "Keys": [
+          {
+            "Name": "_id",
+            "Direction": "1"
+          }
+        ]
+      }
+    ],
+    "IndexNum": 1
+  }
+}

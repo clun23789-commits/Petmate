@@ -7,7 +7,7 @@
 - 云环境 ID 当前来自 `ENV_CONFIG.cloudEnvId`，由 `miniprogram/config/env.profiles.js` 与 `miniprogram/config/env.generated.js` 组合生成。
 - 部署前先确认当前环境：查看 `miniprogram/config/env.generated.js` 的 `SELECTED_APP_ENV`。
 - staging 可暂时复用 MVP 云环境；production 上线前应使用独立生产云环境，且不能继续使用 placeholder、demo 或 test 类 ID。
-- Codex 只能维护代码和文档，不能替代人工在微信云开发控制台创建集合、索引或部署云函数。
+- 自动索引检查只读；Codex 不能替代人工在微信云开发控制台创建、修改或删除集合/索引，也不能替代人工部署云函数。
 - 不要在本文档、代码仓库或提交记录中写入密钥、商户号私钥、支付证书、真实广告位 ID、AI API key 等敏感信息。
 - 第一批仍不接入真实 AI、真实广告、真实微信支付、真实 AR；云函数用于打通 MVP 云端雏形和后续接入边界。
 
@@ -58,7 +58,8 @@
 - [ ] production 当前不得开放支付入口：Mock 会被拒绝，真实微信支付下单和 `wechat_server_notification` 尚未实现。
 - [ ] 部署分享函数：`createShare`、`getShare`、`expireSharesForWork`。
 - [ ] 使用微信开发者工具逐个上传并部署，部署方式选择云端安装依赖。
-- [ ] 对照 `docs/cloud_database_manual_checklist.md` 人工核对索引。
+- [ ] 使用只读 CAM 子账号设置 `PETMATE_CLOUD_ENV_ID` 与腾讯云凭证，运行 `npm run check:deployment`。
+- [ ] 如索引检查失败，对照 `config/cloud-database-indexes.json` 和 `docs/cloud_database_manual_checklist.md` 人工修正，再重新检查。
 - [ ] 运行小程序并对照 `docs/smoke_test_checklist.md` 做主链路 smoke test。
 
 ## 常见错误
@@ -72,6 +73,16 @@
 - 云函数返回格式不符合 `{ ok, data, message }` 或 `{ ok, data }`。
 - 用户归属字段混用：`users`、`orders`、`optimize*`、`adRewardGrants` 使用 `openid`；`works`、`workVersions`、`uploadAssets`、`shares`、`generationTasks` 使用 `ownerOpenid`。
 - 本地默认 development 允许 fallback，但 production 配置不得依赖静默 mock 或 local fallback。
+
+## P1 CloudBase 索引只读检查
+
+- [ ] 先运行 `npm run test:cloud-indexes`，确认离线比较器通过。
+- [ ] 凭证必须来自只读 CAM 子账号，仅授予 `tcb:DescribeEnvs / DescribeTables / DescribeTable`；不要使用主账号长期密钥。
+- [ ] 设置 `PETMATE_CLOUD_ENV_ID`，可选设置 `PETMATE_APP_ENV`，确认命令输出的环境与本次部署目标一致。
+- [ ] 运行 `npm run check:cloud-indexes`；集合、必要索引、字段顺序、方向、unique 或明确状态异常均会阻断。
+- [ ] 官方 `DescribeTable` 当前不返回构建状态，状态缺失会明确告警；不得把告警伪造成 ready。
+- [ ] 多余索引只告警。第一版脚本没有创建、更新、删除或执行数据库命令的能力。
+- [ ] development / staging / production 分别检查；不得把一个环境的通过结果用于另一个环境。
 
 ## P0 支付安全隔离部署提醒
 
@@ -106,7 +117,7 @@
 
 - [ ] 部署前备份 `optimizeQuotas`、`optimizeReservations`、`generationTasks`。
 - [ ] 人工审查历史 `status = reserved` 记录；缺少 `expiresAt` 的记录不能直接批量清零。根据 task 状态逐条 commit、release 或标记超时。
-- [ ] 在 development 与 staging 手动创建 `optimizeReservations.idx_status_expires`：`status` 升序、`expiresAt` 升序。仓库只记录索引要求，不代表云端已经创建。
+- [ ] 运行 `npm run check:deployment`，按 `config/cloud-database-indexes.json` 与失败报告修复 `optimizeReservations` 的必要索引；仓库配置不代表云端已经创建。
 - [ ] 同批部署 `reserveOptimizeQuota`、`startGenerationTask`、`commitOptimizeQuota`、`releaseOptimizeQuota` 与 `cleanupExpiredOptimizeReservations`，避免新旧事务协议混用。
 - [ ] 为 `cleanupExpiredOptimizeReservations` 配置定时触发器：每 10 分钟执行一次，每批最多 100 条；该函数不在小程序 service 层暴露普通调用入口。
 - [ ] 验证 reservation 新字段：`expiresAt` 为服务端时间、`boundAt` 在任务绑定时写入、`releaseReason` 仅由服务端写入。
@@ -118,7 +129,7 @@
 - [ ] 先运行 `npm run test:optimize-quota`、`npm run test:ad-reward`、`npm run check:ad-reward-settlement` 与 `npm run check`。
 - [ ] 确认 `adRewardGrants`、`optimizeQuotaGrants`、`optimizeQuotas`、`works` 四个集合存在。
 - [ ] 按 `createAdRewardSession -> grantAdReward -> getAdRewardStatus -> grantOptimizeQuota` 顺序同批部署，随后再上传新版小程序。
-- [ ] 在 development / staging 手动创建 `adRewardGrants.idx_openid_scene_created` 与 `adRewardGrants.idx_openid_status_expires`；核心事务使用确定性 `_id`，不依赖这两个索引才能正确运行。
+- [ ] 运行 `npm run check:deployment`，按机器事实源与失败报告修复 `adRewardGrants` 的必要索引；核心事务使用确定性 `_id`，不依赖查询索引才能正确运行。
 - [ ] 验证无会话结算被拒绝、同一会话重复/并发结算只增加 3 次、任意事务写失败全部回滚、异常页重复查询不增加次数。
 - [ ] 验证直接调用 `grantOptimizeQuota` 只返回既有结算，`optimizeQuotas.grantedCount` 不变化。
 - [ ] 真实广告位 ID 继续保持为空；本阶段不启用 production，不写入 AppSecret 或其他敏感配置。
