@@ -19,6 +19,12 @@ function normalizeOrder(rawOrder = {}) {
         entitlementStatus: rawOrder.entitlementStatus || "none"
     };
 }
+function isMockPaymentOrder(order = {}) {
+    return order.paymentMode === "mock" &&
+        order.paymentProvider === "mock" &&
+        order.paymentParams &&
+        order.paymentParams.mode === "mock";
+}
 function writeOrder(order, label) {
     const normalized = normalizeOrder(order);
     if (!normalized.orderId) {
@@ -128,9 +134,23 @@ async function startPayment(workId, mode = "success") {
         (0, toast_1.showToast)(paymentResult.message || (nextStatus === "cancelled" ? "支付已取消" : "支付失败，请稍后重试"));
         return nextOrder;
     }
+    if (!isMockPaymentOrder(order)) {
+        const confirmingOrder = {
+            ...order,
+            status: "confirming",
+            paymentStatus: "confirming",
+            entitlementStatus: order.entitlementStatus || "none",
+            errorCode: "REAL_PAYMENT_CONFIRMATION_NOT_IMPLEMENTED",
+            message: "支付请求已完成，正在等待服务端确认支付结果。"
+        };
+        writeOrder(confirmingOrder, "awaitServerPaymentConfirmation");
+        (0, toast_1.showToast)("支付结果正在由服务端确认，请稍后查询");
+        return confirmingOrder;
+    }
     const paidResult = await markPaymentPaid({
         orderId: order.orderId,
-        workId
+        workId,
+        paymentMode: order.paymentMode
     });
     if (!paidResult.ok || paidResult.status !== "paid") {
         const nextOrder = {

@@ -13,7 +13,11 @@ const envProfilesPath = path.join(projectRoot, "miniprogram", "config", "env.pro
 const envGeneratedPath = path.join(projectRoot, "miniprogram", "config", "env.generated.js");
 const envPath = path.join(projectRoot, "miniprogram", "config", "env.js");
 const adConfigPath = path.join(projectRoot, "miniprogram", "config", "ad.js");
-const paymentOrderPath = path.join(projectRoot, "cloudfunctions", "createPaymentOrder", "index.js");
+const paymentOrderCorePath = path.join(projectRoot, "cloudfunctions", "createPaymentOrder", "core.js");
+const markPaymentPaidCorePath = path.join(projectRoot, "cloudfunctions", "markPaymentPaid", "core.js");
+const grantArEntitlementCorePath = path.join(projectRoot, "cloudfunctions", "grantArEntitlement", "core.js");
+const paymentCloudServicePath = path.join(projectRoot, "miniprogram", "services", "payment", "cloud.js");
+const paymentFlowPath = path.join(projectRoot, "miniprogram", "flows", "paymentFlow.js");
 const environmentStrategyPath = path.join(projectRoot, "docs", "environment_strategy.md");
 
 const serviceFiles = {
@@ -163,14 +167,60 @@ if (productionModes.ad === "real") {
 }
 
 if (productionModes.payment === "real") {
-  const paymentContent = readRequiredFile(paymentOrderPath, "PAYMENT");
-  if (/paymentMode\s*:\s*["']mock["']/.test(paymentContent) || /mode\s*:\s*["']mock["']/.test(paymentContent)) {
-    addBlocker("PAYMENT", "production.payment is real but createPaymentOrder still returns mock payment params.");
+  const paymentOrderContent = readRequiredFile(paymentOrderCorePath, "PAYMENT");
+  const markPaymentContent = readRequiredFile(markPaymentPaidCorePath, "PAYMENT");
+  const entitlementContent = readRequiredFile(grantArEntitlementCorePath, "PAYMENT");
+  const paymentCloudContent = readRequiredFile(paymentCloudServicePath, "PAYMENT");
+  const paymentFlowContent = readRequiredFile(paymentFlowPath, "PAYMENT");
+
+  if (
+    !/PETMATE_APP_ENV/.test(paymentOrderContent) ||
+    !/appEnv\s*===\s*["']production["']/.test(paymentOrderContent) ||
+    !/REAL_PAYMENT_NOT_IMPLEMENTED/.test(paymentOrderContent)
+  ) {
+    addBlocker("PAYMENT", "createPaymentOrder must fail closed from the server environment while real payment is unavailable.");
   }
+  if (
+    !/PETMATE_APP_ENV/.test(markPaymentContent) ||
+    !/MOCK_PAYMENT_NOT_ALLOWED/.test(markPaymentContent) ||
+    !/paymentMode\s*!==\s*["']mock["']/.test(markPaymentContent) ||
+    !/paymentProvider\s*!==\s*["']mock["']/.test(markPaymentContent)
+  ) {
+    addBlocker("PAYMENT", "markPaymentPaid is missing the server-side Mock-only confirmation boundary.");
+  }
+  if (
+    !/paymentConfirmationSource/.test(entitlementContent) ||
+    !/trusted_mock_flow/.test(entitlementContent) ||
+    !/wechat_server_notification/.test(entitlementContent) ||
+    !/REAL_PAYMENT_CONFIRMATION_NOT_IMPLEMENTED/.test(entitlementContent)
+  ) {
+    addBlocker("PAYMENT", "grantArEntitlement must require a trusted payment confirmation source.");
+  }
+  if (
+    !/PAYMENT_PARAMS_MISSING/.test(paymentCloudContent) ||
+    !/MOCK_PAYMENT_NOT_ALLOWED/.test(paymentCloudContent) ||
+    !/isProductionLikeEnv/.test(paymentCloudContent) ||
+    !/PAYMENT_PARAMS_INVALID/.test(paymentCloudContent)
+  ) {
+    addBlocker("PAYMENT", "the client payment adapter must reject missing, invalid, or production Mock payment params.");
+  }
+
+  const mockGuardIndex = paymentFlowContent.indexOf("if (!isMockPaymentOrder(order))");
+  const markCallIndex = paymentFlowContent.indexOf("const paidResult = await markPaymentPaid");
+  if (mockGuardIndex < 0 || markCallIndex < 0 || mockGuardIndex > markCallIndex) {
+    addBlocker("PAYMENT", "the payment flow must stop real payments before calling client-side markPaymentPaid.");
+  }
+
+  addBlocker("PAYMENT", "real WeChat payment and server notification confirmation are not implemented.");
 }
 
 if (!fs.existsSync(environmentStrategyPath)) {
   addBlocker("DOCS", "docs/environment_strategy.md is missing.");
+} else {
+  const environmentStrategyContent = readRequiredFile(environmentStrategyPath, "DOCS");
+  if (!/PETMATE_APP_ENV/.test(environmentStrategyContent)) {
+    addBlocker("DOCS", "docs/environment_strategy.md must document the server-side PETMATE_APP_ENV requirement.");
+  }
 }
 
 if (blockers.length > 0) {

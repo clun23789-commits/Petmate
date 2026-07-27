@@ -24,15 +24,14 @@ async function createPaymentOrder(params = {}) {
     status: "pending",
     paymentStatus: "pending",
     entitlementStatus: "none",
-    paymentProvider: "wechat",
+    paymentProvider: "mock",
     paymentMode: "mock",
+    paymentConfirmationSource: "",
+    providerTransactionId: "",
+    providerConfirmedAt: null,
+    providerPayloadDigest: "",
     paymentParams: {
-      mode: "mock",
-      timeStamp: "",
-      nonceStr: "",
-      package: "",
-      signType: "RSA",
-      paySign: ""
+      mode: "mock"
     },
     createdAt: new Date().toISOString(),
     paidAt: null,
@@ -67,7 +66,8 @@ async function requestPayment(params = {}) {
   return {
     ok: true,
     status: "success",
-    orderId: params.orderId || ""
+    orderId: params.orderId || "",
+    paymentMode: "mock"
   };
 }
 
@@ -105,6 +105,8 @@ async function markPaymentPaid(params = {}) {
   order.status = "paid";
   order.paymentStatus = "paid";
   order.entitlementStatus = "pending_sync";
+  order.paymentConfirmationSource = "trusted_mock_flow";
+  order.providerConfirmedAt = order.providerConfirmedAt || new Date().toISOString();
   order.paidAt = order.paidAt || new Date().toISOString();
 
   return {
@@ -116,7 +118,11 @@ async function markPaymentPaid(params = {}) {
     currency: order.currency,
     status: "paid",
     paymentStatus: "paid",
+    paymentProvider: order.paymentProvider,
+    paymentMode: order.paymentMode,
+    paymentConfirmationSource: order.paymentConfirmationSource,
     entitlementStatus: order.entitlementStatus,
+    providerConfirmedAt: order.providerConfirmedAt,
     paidAt: order.paidAt
   };
 }
